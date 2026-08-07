@@ -72,6 +72,28 @@ h1 {
     margin-bottom: 1rem;
 }
 
+.file-type-selector {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.file-type-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.file-type-delimiter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
 .upload-row {
     display: flex;
     gap: 1rem;

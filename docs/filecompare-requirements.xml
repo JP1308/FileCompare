@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AppRequirements>
+
+  <Project>
+    <Name>FileCompare</Name>
+    <Description>A Blazor Server single-page reconciliation tool that compares a "Convertor output file" against a "Client expected file" (both semicolon-delimited, first line = headers). The user selects one or more key columns (composite key, ordered) and a single numeric column to compare. Matching rows are compared on that one numeric column; differences are grouped into configurable magnitude buckets. Results are shown as an expandable tree table grouped by key.</Description>
+    <Type>ASP.NET Core Blazor Server (single page, interactive server-side rendering)</Type>
+    <TargetFramework>net8.0</TargetFramework>
+    <Language>C#</Language>
+  </Project>
+
+  <TechStack>
+    <UIFramework>Blazor Server (single .razor page, no client-side WASM). Custom recursive Razor component for the tree table (no external UI library required; a component library such as Radzen/MudBlazor MAY be used if it speeds up the tree-table but is not required).</UIFramework>
+    <Database>none</Database>
+    <ORM>none</ORM>
+    <Testing>
+      xUnit for parsing/comparison/grouping services
+      <Scenario>Parsing: headers and data values are trimmed of surrounding whitespace</Scenario>
+      <Scenario>Parsing: empty lines in the input are skipped, not treated as data rows</Scenario>
+      <Scenario>Parsing: identical header sets in both files pass validation</Scenario>
+      <Scenario>Parsing: a missing column in one file's header set is detected and reported</Scenario>
+      <Scenario>Parsing: an extra column in one file's header set is detected and reported</Scenario>
+      <Scenario>Parsing: a renamed/differently-cased column name (case-sensitive) is detected as a mismatch</Scenario>
+      <Scenario>Parsing: a data row with a different field count than the header row is reported as an error, not a crash</Scenario>
+      <Scenario>Matching: row present in both files with equal compare-column values → Status = Matching</Scenario>
+      <Scenario>Matching: row present in both files with differing compare-column values → Status = Different, with AbsoluteDifference computed correctly</Scenario>
+      <Scenario>Matching: row whose composite key exists only in the Convertor file → Status = Added</Scenario>
+      <Scenario>Matching: row whose composite key exists only in the Client file → Status = Deleted</Scenario>
+      <Scenario>Matching: duplicate composite-key values within a single file are detected and reported as a warning, without crashing</Scenario>
+      <Scenario>Matching: composite key ordering (e.g. PersonalNr then Lohnart vs. reversed) still matches rows correctly regardless of column order in the source files</Scenario>
+      <Scenario>Matching: a non-numeric value in the compare column produces a clear error rather than an unhandled exception</Scenario>
+      <Scenario>Grouping: a difference exactly equal to a bucket boundary falls into the lower bucket (group N = boundaryN-1 &lt; diff &le; boundaryN)</Scenario>
+      <Scenario>Grouping: a difference greater than the last configured boundary falls into the final "greater than last boundary" group</Scenario>
+      <Scenario>Grouping: default boundaries (0.5, 1, 1.5) are applied when the user has not customized them</Scenario>
+      <Scenario>Grouping: changing boundaries and re-grouping the same Different rows produces updated bucket assignments without re-parsing</Scenario>
+      <Scenario>Export: workbook contains a Summary sheet plus Matching/Added/Deleted sheets plus one sheet per difference-magnitude bucket</Scenario>
+      <Scenario>Export: Summary sheet shows correct Matching/Added/Deleted/Different counts</Scenario>
+      <Scenario>Export: each status/bucket sheet contains only that group's rows, with key values, other column values, and both compare values</Scenario>
+      <Scenario>Export: difference-bucket sheets additionally include an AbsoluteDifference column</Scenario>
+      <Scenario>Export: warnings (e.g. duplicate keys) are listed on the Summary sheet</Scenario>
+      <Scenario>Input type: delimited-text parsing with a comma, tab, or pipe delimiter produces the same headers/rows as semicolon parsing of an equivalent file with delimiters swapped</Scenario>
+      <Scenario>Input type: Excel-workbook parsing reads the first worksheet, treats row 1 as headers, and produces the same ParsedFile shape as delimited-text parsing</Scenario>
+      <Scenario>Input type: an unreadable or non-Excel file selected under "Excel workbook" mode produces a clear inline error rather than an unhandled exception</Scenario>
+      <Scenario>Input type: switching file type or delimiter after both files are already uploaded re-parses and re-validates headers without requiring a full page reload</Scenario>
+      <Scenario>Encoding: a UTF-8 (with and without BOM) delimited-text file containing ä, ö, ü, Ä, Ö, Ü, ß in headers and values parses with those characters intact</Scenario>
+      <Scenario>Encoding: a Windows-1252/ISO-8859-1 encoded delimited-text file containing umlaut characters is auto-detected and parsed correctly rather than as mojibake</Scenario>
+      <Scenario>Encoding: header comparison treats "Ü" and "ü" (and other umlaut case pairs) as equivalent, so an otherwise-identical header set is not flagged as mismatched due to umlaut casing alone</Scenario>
+      <Scenario>Encoding: a row containing umlaut characters in its key or other-column values matches correctly across both files and round-trips unchanged into the Excel export</Scenario>
+    </Testing>
+    <OtherLibraries>
+      <Library>ClosedXML (MIT) — generates the multi-sheet .xlsx export for F8, and reads uploaded Excel workbooks for F9; no other libraries required beyond built-in Blazor InputFile component and ASP.NET Core</Library>
+    </OtherLibraries>
+  </TechStack>
+
+  <Architecture>
+    <Pattern>Layered: Models / Services (parsing, key-matching, comparison, difference-grouping — all plain C#, unit-testable, no Blazor dependency) / single Razor page (Home.razor) with sub-components (FileDropUpload, DualListKeySelector, CompareColumnSelector, GroupingSettings, ResultTreeTable)</Pattern>
+    <ProjectStructure>single Blazor Server project: FileCompare.csproj, plus FileCompare.Tests for unit tests of the services</ProjectStructure>
+  </Architecture>
+
+  <DataModel>
+    <Entity name="FileTypeSelection">
+      <Field name="Format" type="enum: DelimitedText | Excel" notes="chosen input file type; applies to both the Convertor and Client files for a given comparison run"/>
+      <Field name="Delimiter" type="char" notes="field delimiter used when Format = DelimitedText; one of ';' (default), ',', tab, '|'; ignored when Format = Excel"/>
+    </Entity>
+    <Entity name="ParsedFile">
+      <Field name="Headers" type="List&lt;string&gt;" notes="column names from first line, in file order"/>
+      <Field name="Rows" type="List&lt;Dictionary&lt;string,string&gt;&gt;" notes="each row keyed by header name"/>
+    </Entity>
+    <Entity name="KeySelection">
+      <Field name="OrderedKeyColumns" type="List&lt;string&gt;" notes="composite key, in the order the user arranged them (up/down)"/>
+    </Entity>
+    <Entity name="CompareColumnSelection">
+      <Field name="ColumnName" type="string" notes="single numeric column selected for comparison"/>
+    </Entity>
+    <Entity name="DifferenceGroupingConfig">
+      <Field name="Groups" type="List&lt;GroupBoundary&gt;" notes="user-defined; each has an absolute-difference upper bound, e.g. 0.5, 1, 1.5"/>
+    </Entity>
+    <Entity name="RowResult">
+      <Field name="KeyValues" type="List&lt;string&gt;" notes="values of the ordered key columns for this row"/>
+      <Field name="OtherColumnValues" type="Dictionary&lt;string,string&gt;" notes="non-key, non-compare column values, for display context"/>
+      <Field name="ConvertorCompareValue" type="decimal?" notes="value of the compare column from the Convertor file, null if row absent there"/>
+      <Field name="ClientCompareValue" type="decimal?" notes="value of the compare column from the Client file, null if row absent there"/>
+      <Field name="Status" type="enum: Matching | Different | Added | Deleted" notes="Added = key exists only in Convertor file; Deleted = key exists only in Client file"/>
+      <Field name="AbsoluteDifference" type="decimal?" notes="set only when Status = Different"/>
+      <Field name="DifferenceGroup" type="string" notes="set only when Status = Different; which configured bucket the AbsoluteDifference falls into"/>
+    </Entity>
+    <Entity name="ComparisonResult">
+      <Field name="Rows" type="List&lt;RowResult&gt;" notes="all rows with their computed status"/>
+      <Field name="MatchingCount">int</Field>
+      <Field name="AddedCount">int</Field>
+      <Field name="DeletedCount">int</Field>
+      <Field name="DifferentCount">int</Field>
+    </Entity>
+  </DataModel>
+
+  <Features>
+
+    <Feature id="F1" priority="must-have">
+      <Title>File upload: browse and drag &amp; drop</Title>
+      <Description>Two upload zones on the page, each supporting both a file-browse dialog and drag-and-drop, labeled "Convertor output file" and "Client expected file".</Description>
+      <AcceptanceCriteria>
+        <Criterion>Each upload zone shows its label ("Convertor output file" / "Client expected file") and accepts a file via click-to-browse or by dragging a file onto the zone.</Criterion>
+        <Criterion>Visual feedback (e.g. highlight) when a file is dragged over the zone.</Criterion>
+        <Criterion>After a file is dropped/selected, the zone shows the file name and a way to replace it.</Criterion>
+        <Criterion>Upload errors (wrong format, unreadable file) shown inline near the relevant zone, not as a crash.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+
+    <Feature id="F2" priority="must-have">
+      <Title>Parse and validate headers</Title>
+      <Description>Parse both files according to the selected input file type (F9) — delimited text (first line = headers, split on the selected delimiter) or the first worksheet of an Excel workbook (first row = headers). The set of column names in both files must match exactly.</Description>
+      <AcceptanceCriteria>
+        <Criterion>Trims whitespace around each header and field value.</Criterion>
+        <Criterion>If the header sets differ (missing column, extra column, or renamed column, case-sensitive) in either file, comparison is blocked and a clear error is shown listing the mismatched column names — this is a hard failure ("throw"), not a warning.</Criterion>
+        <Criterion>Header-set comparison treats umlaut case variants consistently — Ä/ä, Ö/ö, and Ü/ü are matched as equivalent pairs (case-insensitive for these letters specifically) even though other ASCII letters remain case-sensitive, so encoding/casing differences in umlauts alone don't produce a false header-mismatch error.</Criterion>
+        <Criterion>Delimited-text files are read as UTF-8 (with BOM detection) by default, with automatic fallback to Windows-1252/ISO-8859-1 if the content isn't valid UTF-8, so German umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) in headers and values are read correctly rather than as mojibake or replacement characters. Excel-workbook input (F9) is unaffected, since .xlsx text is natively Unicode.</Criterion>
+        <Criterion>Gracefully reports an error if a data row has a different number of fields than the header row.</Criterion>
+        <Criterion>Handles empty lines by skipping them.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+
+    <Feature id="F3" priority="must-have">
+      <Title>Key column(s) selection (dual list, ordered)</Title>
+      <Description>Once headers are validated, show all columns in an "Available" list. User moves one or more columns into a "Selected Keys" list to form a composite key, and can move entries up/down within that list to set key precedence order.</Description>
+      <AcceptanceCriteria>
+        <Criterion>Two-list ("dual listbox") UI: Available Columns and Selected Key Columns, with controls to move items between them (e.g. arrows or drag).</Criterion>
+        <Criterion>Double-clicking a column in the Available Columns list moves it into Selected Key Columns (appended at the end); double-clicking a column in the Selected Key Columns list moves it back to Available Columns. This works as an alternative to the arrow buttons in both lists.</Criterion>
+        <Criterion>Up/down controls reorder items within the Selected Key Columns list.</Criterion>
+        <Criterion>If a column named "PersonalNr", "Lohnart", and/or "TextLohnart" is present in the headers, it is automatically pre-populated into Selected Key Columns by default (in that order: PersonalNr, then Lohnart, then TextLohnart).</Criterion>
+        <Criterion>At least one key column must be selected before the user can proceed to compare-column selection.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+
+    <Feature id="F4" priority="must-have">
+      <Title>Compare column selection</Title>
+      <Description>User selects exactly one numeric column as "the column to compare". This is the only column whose values are checked for equality between the two files; all other non-key columns are display-only context.</Description>
+      <AcceptanceCriteria>
+        <Criterion>Dropdown/list only offers columns that are not already used as key columns.</Criterion>
+        <Criterion>Only numeric-type columns are selectable (values must parse as decimal); non-numeric columns are excluded or disabled with an explanation.</Criterion>
+        <Criterion>If a column named "Betrag" is present and numeric, it is pre-selected by default.</Criterion>
+        <Criterion>"Compare" action is disabled until a valid compare column is selected.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+
+    <Feature id="F5" priority="must-have">
+      <Title>Row matching and status computation</Title>
+      <Description>Match rows between the two files using the ordered composite key. Classify each row's status.</Description>
+      <AcceptanceCriteria>
+        <Criterion>Row present in both files (same composite key) with equal compare-column values → Status = Matching.</Criterion>
+        <Criterion>Row present in both files with differing compare-column values → Status = Different; compute AbsoluteDifference = |ConvertorValue - ClientValue|.</Criterion>
+        <Criterion>Row whose composite key exists only in the Convertor file → Status = Added.</Criterion>
+        <Criterion>Row whose composite key exists only in the Client file → Status = Deleted.</Criterion>
+        <Criterion>Duplicate composite-key values within a single file are detected and reported as a warning, not a crash.</Criterion>
+        <Criterion>Uses in-memory dictionary lookups (O(n)) rather than nested-loop comparison, so it scales to large files.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+
+    <Feature id="F6" priority="must-have">
+      <Title>Difference-magnitude grouping (configurable)</Title>
+      <Description>For rows with Status = Different, group them by how large the AbsoluteDifference is, using user-configurable bucket boundaries (e.g. 0–0.5, 0.5–1, 1–1.5 ...).</Description>
+      <AcceptanceCriteria>
+        <Criterion>Settings panel lets the user specify how many groups to use and the absolute-value boundary for each group.</Criterion>
+        <Criterion>Buckets are applied as: group 1 = 0 &lt; diff &le; boundary1, group 2 = boundary1 &lt; diff &le; boundary2, etc.; a final "greater than last boundary" group catches any remainder.</Criterion>
+        <Criterion>Changing the grouping settings and re-running updates the Different-entries grouping without needing to re-upload files.</Criterion>
+        <Criterion>Sensible default boundaries are provided (e.g. 0.5, 1, 1.5) if the user doesn't customize them.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+
+    <Feature id="F7" priority="must-have">
+      <Title>Tree-table results view</Title>
+      <Description>Display comparison results as an expandable tree table.</Description>
+      <AcceptanceCriteria>
+        <Criterion>Column headers, left to right: each key column's name (in selected order), then each remaining "other" (non-key, non-compare) column's name, then the compare column's name suffixed "(Convertor)" in bold, then the compare column's name suffixed "(Client)" in bold.</Criterion>
+        <Criterion>Top level of the tree has four nodes, each showing its label and row count in parentheses: "Matching entries (N)", "Added entries (N)", "Deleted entries (N)", "Different entries (N)".</Criterion>
+        <Criterion>Under "Different entries", rows are further grouped by difference-magnitude bucket (from F6), each bucket labeled with its range and count.</Criterion>
+        <Criterion>Within any node/bucket, rows are grouped hierarchically by key column values in order: expanding shows the first key column's distinct values (with counts); expanding one of those shows the second key column's distinct values within it; and so on until the last key level, which expands to show the actual matched row(s) with all column values.</Criterion>
+        <Criterion>Expand/collapse is interactive (click to expand/collapse each tree node) without a full page reload.</Criterion>
+        <Criterion>Tree remains usable for large result sets (e.g. virtualization or lazy expansion rather than rendering everything at once).</Criterion>
+        <Criterion>Umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) in key values, other column values, and column headers render correctly throughout the tree — no mojibake or replacement characters.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+
+    <Feature id="F8" priority="nice-to-have">
+      <Title>Export results</Title>
+      <Description>Button to download the full comparison result as a multi-sheet Excel (.xlsx) workbook from the browser, split so each status group and each difference-magnitude bucket is its own sheet.</Description>
+      <AcceptanceCriteria>
+        <Criterion>"Download report" button appears once results are shown and triggers a browser file download of an .xlsx workbook.</Criterion>
+        <Criterion>Workbook contains a "Summary" sheet with the Matching/Added/Deleted/Different counts, the difference-grouping boundaries used, and any warnings (e.g. duplicate keys).</Criterion>
+        <Criterion>Workbook contains one sheet each for "Matching", "Added", and "Deleted", listing that group's rows with key values, other column values, and both compare values.</Criterion>
+        <Criterion>Workbook contains one additional sheet per difference-magnitude bucket (from F6), named after that bucket's range (e.g. "Diff 0-0.5", "Diff gt 1.5"), each including an AbsoluteDifference column alongside the row data.</Criterion>
+        <Criterion>Sheet names are sanitized and de-duplicated to satisfy Excel's naming constraints (max 31 characters, no \ / ? * [ ] : characters).</Criterion>
+        <Criterion>Umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) in key values, other column values, and column headers are preserved exactly in the exported workbook, matching what is shown in the tree table.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+
+    <Feature id="F9" priority="must-have">
+      <Title>Input file type selection (format + delimiter)</Title>
+      <Description>Before/alongside the upload zones, the user selects the type of the input files: "Delimited text" (default) or "Excel workbook (.xlsx)". When Delimited text is selected, the user also picks the field delimiter. This selection applies to both the Convertor output file and the Client expected file for a given comparison run — mixed formats between the two files are not supported.</Description>
+      <AcceptanceCriteria>
+        <Criterion>A file-type selector (e.g. radio buttons or dropdown) offers "Delimited text" and "Excel workbook (.xlsx)", defaulting to "Delimited text".</Criterion>
+        <Criterion>When "Delimited text" is selected, a delimiter dropdown appears offering Semicolon (default), Comma, Tab, and Pipe.</Criterion>
+        <Criterion>When "Excel workbook" is selected, the delimiter dropdown is hidden/disabled, and both uploaded files are parsed by reading the first worksheet, treating row 1 as headers, in the same column-order/trimming semantics as delimited-text parsing (F2).</Criterion>
+        <Criterion>Both the Convertor output file and the Client expected file are parsed using the same selected format and delimiter; there is no per-file override.</Criterion>
+        <Criterion>Changing the file type or delimiter after both files are already uploaded automatically re-parses both files and re-runs header validation (F2), without a full page reload.</Criterion>
+        <Criterion>If an uploaded file cannot be parsed as the selected type (e.g. not a valid .xlsx, or no occurrences of the selected delimiter found), a clear inline error is shown near the relevant upload zone instead of a crash.</Criterion>
+      </AcceptanceCriteria>
+    </Feature>
+  </Features>
+
+  <UserInterface>
+    <Screen name="Home (single page)">
+      <Purpose>The entire workflow happens on one page: upload both files, choose keys and compare column, configure grouping, compare, and explore results as a tree — all without navigating away.</Purpose>
+      <Elements>
+        <Element>File-type selector: "Delimited text" (with delimiter dropdown: Semicolon/Comma/Tab/Pipe) or "Excel workbook (.xlsx)" (F9)</Element>
+        <Element>Two upload zones with browse + drag-and-drop: "Convertor output file", "Client expected file"</Element>
+        <Element>Header-mismatch error banner (shown only if validation in F2 fails)</Element>
+        <Element>Dual-list key column selector with up/down reorder (F3)</Element>
+        <Element>Compare column dropdown, numeric columns only (F4)</Element>
+        <Element>Difference-grouping settings panel: number of groups + boundary value per group (F6)</Element>
+        <Element>"Compare" button</Element>
+        <Element>Tree-table results area (F7): top-level Matching/Added/Deleted/Different nodes with counts, expandable down through key levels to individual rows</Element>
+        <Element>"Download report" button (nice-to-have) — downloads a multi-sheet .xlsx workbook (F8)</Element>
+      </Elements>
+    </Screen>
+  </UserInterface>
+
+  <NonFunctional>
+    <Performance>Should comfortably handle files with tens of thousands of rows using in-memory dictionary lookups for key matching (O(n), not O(n^2)). Parsing/comparison should run off the Blazor Server UI thread for large files so the page stays responsive. Tree rendering should not force-render the entire result set at once (lazy/virtualized expansion).</Performance>
+    <ErrorHandling>Header mismatches, malformed rows, unreadable uploads (including files that don't match the selected input type per F9), non-numeric values in the compare column, or invalid grouping settings all produce clear, inline UI messages — no unhandled exceptions or stack traces shown to the user.</ErrorHandling>
+    <Logging>Not required beyond on-page error messages.</Logging>
+    <Configuration>Max upload file size configured reasonably (e.g. up to 50MB) via Blazor InputFile settings.</Configuration>
+    <Encoding>Delimited-text input is read as UTF-8 (BOM-aware) with automatic fallback to Windows-1252/ISO-8859-1, so German umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) round-trip correctly end-to-end: from file read, through header validation, key/compare matching, and tree-table display, to the exported Excel workbook. Excel-workbook input/output is natively Unicode and needs no special handling.</Encoding>
+  </NonFunctional>
+
+  <Constraints>
+    <Constraint>No database — pure C#/.NET and built-in/optional Blazor UI components.</Constraint>
+    <Constraint>Supported input file types are delimited text (semicolon/comma/tab/pipe, first line = headers) and Excel workbooks (first worksheet, first row = headers) — see F9. Both files in a comparison run must use the same type and delimiter.</Constraint>
+    <Constraint>Single page only — no multi-page navigation/routing needed.</Constraint>
+    <Constraint>Compare column must be numeric (decimal); non-numeric "value comparison" columns are out of scope for this version.</Constraint>
+  </Constraints>
+
+  <OpenItems>
+    <!-- Resolved 2026-08-07: default key columns = PersonalNr, Lohnart (in that order); default compare column = Betrag; Added/Deleted convention confirmed as specified (Added = only in Convertor file, Deleted = only in Client file). -->
+  </OpenItems>
+
+  <Deliverable>
+    <Output>Runnable .NET 8 Blazor Server solution (.sln + .csproj + source files) with a README explaining how to build and run it (dotnet run), plus sample input files for testing.</Output>
+    <IncludeTests>true</IncludeTests>
+  </Deliverable>
+
+</AppRequirements>

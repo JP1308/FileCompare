@@ -16,6 +16,10 @@ public partial class Home : ComponentBase
     [Inject] private ExcelExportService ExcelExportService { get; set; } = default!;
     [Inject] private IJSRuntime JsRuntime { get; set; } = default!;
 
+    private FileTypeSelection _fileTypeSelection = FileTypeSelection.Default();
+
+    private byte[]? _convertorRawBytes;
+    private byte[]? _clientRawBytes;
     private ParsedFile? _convertorFile;
     private ParsedFile? _clientFile;
     private string? _convertorFileName;
@@ -56,33 +60,77 @@ public partial class Home : ComponentBase
         StateHasChanged();
     }
 
-    private async Task OnFileLoadedAsync(bool isConvertor, string fileName, string content)
+    private async Task OnFileLoadedAsync(bool isConvertor, string fileName, byte[] content)
+    {
+        if (isConvertor)
+        {
+            _convertorRawBytes = content;
+            _convertorFileName = fileName;
+        }
+        else
+        {
+            _clientRawBytes = content;
+            _clientFileName = fileName;
+        }
+
+        await ParseAndStoreAsync(isConvertor, content, fileName);
+        RebuildRowParseErrors();
+        await ValidateAndResetAsync();
+    }
+
+    private async Task OnFileTypeSelectionChangedAsync(FileTypeSelection selection)
+    {
+        _fileTypeSelection = selection;
+
+        if (_convertorRawBytes is not null)
+        {
+            await ParseAndStoreAsync(true, _convertorRawBytes, _convertorFileName ?? "Convertor output file");
+        }
+        if (_clientRawBytes is not null)
+        {
+            await ParseAndStoreAsync(false, _clientRawBytes, _clientFileName ?? "Client expected file");
+        }
+
+        RebuildRowParseErrors();
+        await ValidateAndResetAsync();
+    }
+
+    private async Task ParseAndStoreAsync(bool isConvertor, byte[] bytes, string fileName)
     {
         try
         {
-            var parsed = await Task.Run(() => ParserService.Parse(content));
+            var parsed = await Task.Run(() => ParseBytes(bytes));
 
             if (isConvertor)
             {
                 _convertorFile = parsed;
-                _convertorFileName = fileName;
                 _convertorError = null;
             }
             else
             {
                 _clientFile = parsed;
-                _clientFileName = fileName;
                 _clientError = null;
             }
-
-            RebuildRowParseErrors();
-            await ValidateAndResetAsync();
         }
         catch (Exception ex)
         {
+            if (isConvertor)
+            {
+                _convertorFile = null;
+            }
+            else
+            {
+                _clientFile = null;
+            }
             OnFileError(isConvertor, $"Failed to parse '{fileName}': {ex.Message}");
         }
     }
+
+    private ParsedFile ParseBytes(byte[] bytes) => _fileTypeSelection.Format switch
+    {
+        InputFileFormat.Excel => ParserService.ParseExcel(bytes),
+        _ => ParserService.ParseDelimitedText(bytes, _fileTypeSelection.Delimiter),
+    };
 
     private void RebuildRowParseErrors()
     {

@@ -5,7 +5,7 @@
      @ondragleave="() => _isDragOver = false"
      @ondrop="() => _isDragOver = false"
      @ondragover:preventDefault="true">
-    <InputFile class="upload-input" OnChange="HandleFileChangeAsync" accept=".csv,.txt" />
+    <InputFile class="upload-input" OnChange="HandleFileChangeAsync" accept="@AcceptExtensions" />
     <div class="upload-label">@Label</div>
     @if (FileName is null)
     {
@@ -37,7 +37,10 @@
     public string? ErrorMessage { get; set; }
 
     [Parameter]
-    public EventCallback<(string FileName, string Content)> OnFileLoaded { get; set; }
+    public string AcceptExtensions { get; set; } = ".csv,.txt,.xlsx";
+
+    [Parameter]
+    public EventCallback<(string FileName, byte[] Content)> OnFileLoaded { get; set; }
 
     [Parameter]
     public EventCallback<string> OnError { get; set; }
@@ -59,9 +62,9 @@
         try
         {
             using var stream = file.OpenReadStream(MaxFileSizeBytes);
-            using var reader = new StreamReader(stream);
-            var content = await reader.ReadToEndAsync();
-            await OnFileLoaded.InvokeAsync((file.Name, content));
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            await OnFileLoaded.InvokeAsync((file.Name, memoryStream.ToArray()));
         }
         catch (Exception ex)
         {

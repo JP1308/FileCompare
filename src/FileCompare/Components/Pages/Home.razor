@@ -8,16 +8,23 @@
     <p class="subtitle">Reconcile a Convertor output file against a Client expected file.</p>
 
     <div class="section">
-        <h2>1. Upload files</h2>
+        <h2>1. File type</h2>
+        <FileTypeSelector Selection="@_fileTypeSelection" SelectionChanged="OnFileTypeSelectionChangedAsync" />
+    </div>
+
+    <div class="section">
+        <h2>2. Upload files</h2>
         <div class="upload-row">
             <FileDropUpload Label="Convertor output file"
                              FileName="@_convertorFileName"
                              ErrorMessage="@_convertorError"
+                             AcceptExtensions="@(_fileTypeSelection.Format == InputFileFormat.Excel ? ".xlsx" : ".csv,.txt")"
                              OnFileLoaded="args => OnFileLoadedAsync(true, args.FileName, args.Content)"
                              OnError="msg => OnFileError(true, msg)" />
             <FileDropUpload Label="Client expected file"
                              FileName="@_clientFileName"
                              ErrorMessage="@_clientError"
+                             AcceptExtensions="@(_fileTypeSelection.Format == InputFileFormat.Excel ? ".xlsx" : ".csv,.txt")"
                              OnFileLoaded="args => OnFileLoadedAsync(false, args.FileName, args.Content)"
                              OnError="msg => OnFileError(false, msg)" />
         </div>
@@ -52,7 +59,7 @@
     @if (_headersReady)
     {
         <div class="section">
-            <h2>2. Select key column(s)</h2>
+            <h2>3. Select key column(s)</h2>
             <DualListKeySelector AvailableColumns="_availableKeyColumns"
                                   SelectedKeyColumns="_selectedKeyColumns"
                                   SelectedKeyColumnsChanged="OnSelectedKeysChanged" />
@@ -61,7 +68,7 @@
         @if (_selectedKeyColumns.Count > 0)
         {
             <div class="section">
-                <h2>3. Select compare column</h2>
+                <h2>4. Select compare column</h2>
                 <CompareColumnSelector NumericCandidateColumns="_numericCandidateColumns"
                                         NonNumericExcludedColumns="_nonNumericExcludedColumns"
                                         SelectedColumn="@_compareColumnName"
@@ -69,7 +76,7 @@
             </div>
 
             <div class="section">
-                <h2>4. Difference-magnitude grouping</h2>
+                <h2>5. Difference-magnitude grouping</h2>
                 <GroupingSettings Config="_groupingConfig" ConfigChanged="OnGroupingConfigChanged" />
             </div>
 
@@ -101,7 +108,7 @@
     @if (_comparisonResult is not null && _compareColumnName is not null)
     {
         <div class="section">
-            <h2>5. Results</h2>
+            <h2>6. Results</h2>
             <ResultTreeTable Result="_comparisonResult"
                               KeyColumns="_selectedKeyColumns"
                               OtherColumns="_otherColumns"

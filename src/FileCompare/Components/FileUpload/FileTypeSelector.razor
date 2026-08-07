@@ -1,0 +1,53 @@
+@using FileCompare.Models
+
+<div class="file-type-selector">
+    <label class="file-type-option">
+        <input type="radio" name="fileFormat" checked="@(Selection.Format == InputFileFormat.DelimitedText)"
+               @onchange="() => OnFormatChanged(InputFileFormat.DelimitedText)" />
+        Delimited text
+    </label>
+    <label class="file-type-option">
+        <input type="radio" name="fileFormat" checked="@(Selection.Format == InputFileFormat.Excel)"
+               @onchange="() => OnFormatChanged(InputFileFormat.Excel)" />
+        Excel workbook (.xlsx)
+    </label>
+
+    @if (Selection.Format == InputFileFormat.DelimitedText)
+    {
+        <label class="file-type-delimiter">
+            Delimiter:
+            <select @onchange="OnDelimiterChanged">
+                <option value=";" selected="@(Selection.Delimiter == ';')">Semicolon ( ; )</option>
+                <option value="," selected="@(Selection.Delimiter == ',')">Comma ( , )</option>
+                <option value="tab" selected="@(Selection.Delimiter == '\t')">Tab</option>
+                <option value="|" selected="@(Selection.Delimiter == '|')">Pipe ( | )</option>
+            </select>
+        </label>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public FileTypeSelection Selection { get; set; } = FileTypeSelection.Default();
+
+    [Parameter]
+    public EventCallback<FileTypeSelection> SelectionChanged { get; set; }
+
+    private async Task OnFormatChanged(InputFileFormat format)
+    {
+        await SelectionChanged.InvokeAsync(Selection with { Format = format });
+    }
+
+    private async Task OnDelimiterChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString() ?? ";";
+        var delimiter = value switch
+        {
+            "tab" => '\t',
+            "," => ',',
+            "|" => '|',
+            _ => ';',
+        };
+        await SelectionChanged.InvokeAsync(Selection with { Delimiter = delimiter });
+    }
+}
