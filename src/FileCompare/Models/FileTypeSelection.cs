@@ -2,6 +2,7 @@ namespace FileCompare.Models;
 
 public enum InputFileFormat
 {
+    Csv,
     DelimitedText,
     Excel,
 }

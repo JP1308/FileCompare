@@ -18,13 +18,13 @@
             <FileDropUpload Label="Convertor output file"
                              FileName="@_convertorFileName"
                              ErrorMessage="@_convertorError"
-                             AcceptExtensions="@(_fileTypeSelection.Format == InputFileFormat.Excel ? ".xlsx" : ".csv,.txt")"
+                             AcceptExtensions="@AcceptExtensionsForCurrentFormat"
                              OnFileLoaded="args => OnFileLoadedAsync(true, args.FileName, args.Content)"
                              OnError="msg => OnFileError(true, msg)" />
             <FileDropUpload Label="Client expected file"
                              FileName="@_clientFileName"
                              ErrorMessage="@_clientError"
-                             AcceptExtensions="@(_fileTypeSelection.Format == InputFileFormat.Excel ? ".xlsx" : ".csv,.txt")"
+                             AcceptExtensions="@AcceptExtensionsForCurrentFormat"
                              OnFileLoaded="args => OnFileLoadedAsync(false, args.FileName, args.Content)"
                              OnError="msg => OnFileError(false, msg)" />
         </div>

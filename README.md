@@ -36,7 +36,7 @@ dotnet test
 
 ## Workflow
 
-1. **Select the input file type**: "Delimited text" (default, with a Semicolon/Comma/Tab/Pipe delimiter picker) or "Excel workbook (.xlsx)". Both files must use the same type/delimiter. Changing this after files are uploaded automatically re-parses and re-validates them.
+1. **Select the input file type**: "CSV" (comma-delimited, `.csv`), "Delimited text" (default: semicolon, with a Semicolon/Tab/Pipe delimiter picker), or "Excel workbook (.xlsx)". Both files must use the same type/delimiter. Changing this after files are uploaded automatically re-parses and re-validates them.
 2. **Upload** both files (browse or drag-and-drop).
 3. Headers are validated — if the column sets don't match exactly, comparison is blocked with an inline error. Header names are compared case-sensitively, except that Ä/ä, Ö/ö, and Ü/ü are treated as equivalent case pairs.
 4. **Select key column(s)** in the dual-list selector (double-click also moves an item between lists); `PersonalNr`, `Lohnart`, and `TextLohnart` are pre-selected by default if present. Reorder with the up/down arrows to set key precedence.

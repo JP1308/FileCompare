@@ -2,6 +2,11 @@
 
 <div class="file-type-selector">
     <label class="file-type-option">
+        <input type="radio" name="fileFormat" checked="@(Selection.Format == InputFileFormat.Csv)"
+               @onchange="() => OnFormatChanged(InputFileFormat.Csv)" />
+        CSV (.csv)
+    </label>
+    <label class="file-type-option">
         <input type="radio" name="fileFormat" checked="@(Selection.Format == InputFileFormat.DelimitedText)"
                @onchange="() => OnFormatChanged(InputFileFormat.DelimitedText)" />
         Delimited text
@@ -18,7 +23,6 @@
             Delimiter:
             <select @onchange="OnDelimiterChanged">
                 <option value=";" selected="@(Selection.Delimiter == ';')">Semicolon ( ; )</option>
-                <option value="," selected="@(Selection.Delimiter == ',')">Comma ( , )</option>
                 <option value="tab" selected="@(Selection.Delimiter == '\t')">Tab</option>
                 <option value="|" selected="@(Selection.Delimiter == '|')">Pipe ( | )</option>
             </select>
@@ -44,7 +48,6 @@
         var delimiter = value switch
         {
             "tab" => '\t',
-            "," => ',',
             "|" => '|',
             _ => ';',
         };

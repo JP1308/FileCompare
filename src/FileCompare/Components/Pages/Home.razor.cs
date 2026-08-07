@@ -126,9 +126,17 @@ public partial class Home : ComponentBase
         }
     }
 
+    private string AcceptExtensionsForCurrentFormat => _fileTypeSelection.Format switch
+    {
+        InputFileFormat.Csv => ".csv",
+        InputFileFormat.Excel => ".xlsx",
+        _ => ".csv,.txt",
+    };
+
     private ParsedFile ParseBytes(byte[] bytes) => _fileTypeSelection.Format switch
     {
         InputFileFormat.Excel => ParserService.ParseExcel(bytes),
+        InputFileFormat.Csv => ParserService.ParseDelimitedText(bytes, ','),
         _ => ParserService.ParseDelimitedText(bytes, _fileTypeSelection.Delimiter),
     };
 

@@ -38,7 +38,8 @@
       <Scenario>Export: each status/bucket sheet contains only that group's rows, with key values, other column values, and both compare values</Scenario>
       <Scenario>Export: difference-bucket sheets additionally include an AbsoluteDifference column</Scenario>
       <Scenario>Export: warnings (e.g. duplicate keys) are listed on the Summary sheet</Scenario>
-      <Scenario>Input type: delimited-text parsing with a comma, tab, or pipe delimiter produces the same headers/rows as semicolon parsing of an equivalent file with delimiters swapped</Scenario>
+      <Scenario>Input type: CSV parsing (fixed comma delimiter) produces the same headers/rows as semicolon delimited-text parsing of an equivalent file with delimiters swapped</Scenario>
+      <Scenario>Input type: delimited-text parsing with a tab or pipe delimiter produces the same headers/rows as semicolon parsing of an equivalent file with delimiters swapped</Scenario>
       <Scenario>Input type: Excel-workbook parsing reads the first worksheet, treats row 1 as headers, and produces the same ParsedFile shape as delimited-text parsing</Scenario>
       <Scenario>Input type: an unreadable or non-Excel file selected under "Excel workbook" mode produces a clear inline error rather than an unhandled exception</Scenario>
       <Scenario>Input type: switching file type or delimiter after both files are already uploaded re-parses and re-validates headers without requiring a full page reload</Scenario>
@@ -59,8 +60,8 @@
 
   <DataModel>
     <Entity name="FileTypeSelection">
-      <Field name="Format" type="enum: DelimitedText | Excel" notes="chosen input file type; applies to both the Convertor and Client files for a given comparison run"/>
-      <Field name="Delimiter" type="char" notes="field delimiter used when Format = DelimitedText; one of ';' (default), ',', tab, '|'; ignored when Format = Excel"/>
+      <Field name="Format" type="enum: Csv | DelimitedText | Excel" notes="chosen input file type; applies to both the Convertor and Client files for a given comparison run"/>
+      <Field name="Delimiter" type="char" notes="field delimiter used only when Format = DelimitedText; one of ';' (default), tab, '|'; fixed to ',' when Format = Csv; ignored when Format = Excel"/>
     </Entity>
     <Entity name="ParsedFile">
       <Field name="Headers" type="List&lt;string&gt;" notes="column names from first line, in file order"/>
@@ -194,11 +195,12 @@
     </Feature>
 
     <Feature id="F9" priority="must-have">
-      <Title>Input file type selection (format + delimiter)</Title>
-      <Description>Before/alongside the upload zones, the user selects the type of the input files: "Delimited text" (default) or "Excel workbook (.xlsx)". When Delimited text is selected, the user also picks the field delimiter. This selection applies to both the Convertor output file and the Client expected file for a given comparison run — mixed formats between the two files are not supported.</Description>
+      <Title>Input file type selection (CSV / delimited text / Excel)</Title>
+      <Description>Before/alongside the upload zones, the user selects the type of the input files: "CSV" (comma-delimited, .csv), "Delimited text" (default: semicolon; user-selectable delimiter), or "Excel workbook" (.xlsx). This selection applies to both the Convertor output file and the Client expected file for a given comparison run — mixed formats between the two files are not supported.</Description>
       <AcceptanceCriteria>
-        <Criterion>A file-type selector (e.g. radio buttons or dropdown) offers "Delimited text" and "Excel workbook (.xlsx)", defaulting to "Delimited text".</Criterion>
-        <Criterion>When "Delimited text" is selected, a delimiter dropdown appears offering Semicolon (default), Comma, Tab, and Pipe.</Criterion>
+        <Criterion>A file-type selector (e.g. radio buttons) offers "CSV", "Delimited text", and "Excel workbook (.xlsx)", defaulting to "Delimited text".</Criterion>
+        <Criterion>When "CSV" is selected, files are parsed as comma-delimited with no delimiter picker shown; upload zones accept ".csv".</Criterion>
+        <Criterion>When "Delimited text" is selected, a delimiter dropdown appears offering Semicolon (default), Tab, and Pipe (Comma is covered by the dedicated CSV option, not duplicated here).</Criterion>
         <Criterion>When "Excel workbook" is selected, the delimiter dropdown is hidden/disabled, and both uploaded files are parsed by reading the first worksheet, treating row 1 as headers, in the same column-order/trimming semantics as delimited-text parsing (F2).</Criterion>
         <Criterion>Both the Convertor output file and the Client expected file are parsed using the same selected format and delimiter; there is no per-file override.</Criterion>
         <Criterion>Changing the file type or delimiter after both files are already uploaded automatically re-parses both files and re-runs header validation (F2), without a full page reload.</Criterion>
@@ -211,7 +213,7 @@
     <Screen name="Home (single page)">
       <Purpose>The entire workflow happens on one page: upload both files, choose keys and compare column, configure grouping, compare, and explore results as a tree — all without navigating away.</Purpose>
       <Elements>
-        <Element>File-type selector: "Delimited text" (with delimiter dropdown: Semicolon/Comma/Tab/Pipe) or "Excel workbook (.xlsx)" (F9)</Element>
+        <Element>File-type selector: "CSV", "Delimited text" (with delimiter dropdown: Semicolon/Tab/Pipe), or "Excel workbook (.xlsx)" (F9)</Element>
         <Element>Two upload zones with browse + drag-and-drop: "Convertor output file", "Client expected file"</Element>
         <Element>Header-mismatch error banner (shown only if validation in F2 fails)</Element>
         <Element>Dual-list key column selector with up/down reorder (F3)</Element>
@@ -234,7 +236,7 @@
 
   <Constraints>
     <Constraint>No database — pure C#/.NET and built-in/optional Blazor UI components.</Constraint>
-    <Constraint>Supported input file types are delimited text (semicolon/comma/tab/pipe, first line = headers) and Excel workbooks (first worksheet, first row = headers) — see F9. Both files in a comparison run must use the same type and delimiter.</Constraint>
+    <Constraint>Supported input file types are CSV (comma, first line = headers), delimited text (semicolon/tab/pipe, first line = headers), and Excel workbooks (first worksheet, first row = headers) — see F9. Both files in a comparison run must use the same type and delimiter.</Constraint>
     <Constraint>Single page only — no multi-page navigation/routing needed.</Constraint>
     <Constraint>Compare column must be numeric (decimal); non-numeric "value comparison" columns are out of scope for this version.</Constraint>
   </Constraints>
