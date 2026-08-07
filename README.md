@@ -41,9 +41,11 @@ dotnet test
 3. Headers are validated — if the column sets don't match exactly, comparison is blocked with an inline error. Header names are compared case-sensitively, except that Ä/ä, Ö/ö, and Ü/ü are treated as equivalent case pairs.
 4. **Select key column(s)** in the dual-list selector (double-click also moves an item between lists); `PersonalNr`, `Lohnart`, and `TextLohnart` are pre-selected by default if present. Reorder with the up/down arrows to set key precedence.
 5. **Select the compare column** — only numeric, non-key columns are offered; `Betrag` is pre-selected by default if present and numeric.
-6. **Configure difference-magnitude grouping** (defaults: 0.5, 1, 1.5) — these buckets can be changed and re-applied after a comparison without re-uploading files.
+6. **Configure difference-magnitude grouping** (default: a single group, boundary 0.5) — these buckets can be changed and re-applied after a comparison without re-uploading files.
 7. Click **Compare**. Results appear as an expandable tree: Matching / Added / Deleted / Different at the top level (Different further split by magnitude bucket), then drilled down by each key column's values down to the individual row(s).
-8. Optionally **Download report** to export the result as a multi-sheet Excel workbook (`comparison-report.xlsx`): a **Summary** sheet (counts + grouping boundaries used + any warnings), then **Matching**, **Added**, **Deleted** sheets, then one sheet per difference-magnitude bucket (e.g. "Diff 0-0.5", "Diff 0.5-1", "Diff gt 1.5"), each with an `AbsoluteDifference` column.
+8. Optionally **Download report** to export the result as a multi-sheet Excel workbook (`comparison-report.xlsx`): a **Summary** sheet (counts + grouping boundaries used + any warnings), then **Matching**, **Added**, **Deleted** sheets, then one sheet per difference-magnitude bucket (e.g. "Diff 0-0.5", "Diff gt 0.5"), each with an `AbsoluteDifference` column.
+
+Every result sheet (and the on-page tree table) shows columns in this order: key columns, `{compare column} (Convertor)`, `{compare column} (Client)`, an `AbsoluteDifference` column (bucket sheets only), then a single combined **Other columns** column — all remaining non-key, non-compare columns joined as `Name: Value; Name: Value`.
 
 ### Delimited-text encoding
 

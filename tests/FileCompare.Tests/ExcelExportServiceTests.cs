@@ -93,8 +93,24 @@ public class ExcelExportServiceTests
 
         Assert.Equal("PersonalNr", sheet.Cell(1, 1).GetString());
         Assert.Equal("1", sheet.Cell(2, 1).GetString());
-        Assert.Equal("Alice", sheet.Cell(2, 3).GetString());
         Assert.True(sheet.Cell(3, 1).IsEmpty());
+    }
+
+    [Fact]
+    public void ExportToExcel_ColumnOrder_IsKeysThenCompareThenCombinedOtherColumns()
+    {
+        var bytes = _sut.ExportToExcel(BuildSampleResult(), KeyColumns, OtherColumns, "Betrag", DifferenceGroupingConfig.Default());
+
+        using var stream = new MemoryStream(bytes);
+        using var workbook = new XLWorkbook(stream);
+        var sheet = workbook.Worksheet("Matching");
+
+        Assert.Equal("PersonalNr", sheet.Cell(1, 1).GetString());
+        Assert.Equal("Lohnart", sheet.Cell(1, 2).GetString());
+        Assert.Equal("Betrag (Convertor)", sheet.Cell(1, 3).GetString());
+        Assert.Equal("Betrag (Client)", sheet.Cell(1, 4).GetString());
+        Assert.Equal("Other columns", sheet.Cell(1, 5).GetString());
+        Assert.Equal("Name: Alice", sheet.Cell(2, 5).GetString());
     }
 
     [Fact]

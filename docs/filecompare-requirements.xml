@@ -31,11 +31,12 @@
       <Scenario>Matching: a non-numeric value in the compare column produces a clear error rather than an unhandled exception</Scenario>
       <Scenario>Grouping: a difference exactly equal to a bucket boundary falls into the lower bucket (group N = boundaryN-1 &lt; diff &le; boundaryN)</Scenario>
       <Scenario>Grouping: a difference greater than the last configured boundary falls into the final "greater than last boundary" group</Scenario>
-      <Scenario>Grouping: default boundaries (0.5, 1, 1.5) are applied when the user has not customized them</Scenario>
+      <Scenario>Grouping: the default configuration is a single group with boundary 0.5, applied when the user has not customized it</Scenario>
       <Scenario>Grouping: changing boundaries and re-grouping the same Different rows produces updated bucket assignments without re-parsing</Scenario>
       <Scenario>Export: workbook contains a Summary sheet plus Matching/Added/Deleted sheets plus one sheet per difference-magnitude bucket</Scenario>
       <Scenario>Export: Summary sheet shows correct Matching/Added/Deleted/Different counts</Scenario>
-      <Scenario>Export: each status/bucket sheet contains only that group's rows, with key values, other column values, and both compare values</Scenario>
+      <Scenario>Export: each status/bucket sheet contains only that group's rows, with key values, both compare values, and a single combined "Other columns" value per row</Scenario>
+      <Scenario>Export/UI: columns appear in order key columns, compare(Convertor), compare(Client), [AbsoluteDifference on bucket sheets], combined "Other columns"</Scenario>
       <Scenario>Export: difference-bucket sheets additionally include an AbsoluteDifference column</Scenario>
       <Scenario>Export: warnings (e.g. duplicate keys) are listed on the Summary sheet</Scenario>
       <Scenario>Input type: CSV parsing (fixed comma delimiter) produces the same headers/rows as semicolon delimited-text parsing of an equivalent file with delimiters swapped</Scenario>
@@ -74,7 +75,7 @@
       <Field name="ColumnName" type="string" notes="single numeric column selected for comparison"/>
     </Entity>
     <Entity name="DifferenceGroupingConfig">
-      <Field name="Groups" type="List&lt;GroupBoundary&gt;" notes="user-defined; each has an absolute-difference upper bound, e.g. 0.5, 1, 1.5"/>
+      <Field name="Groups" type="List&lt;GroupBoundary&gt;" notes="user-defined; each has an absolute-difference upper bound; default is a single group with boundary 0.5"/>
     </Entity>
     <Entity name="RowResult">
       <Field name="KeyValues" type="List&lt;string&gt;" notes="values of the ordered key columns for this row"/>
@@ -163,7 +164,7 @@
         <Criterion>Settings panel lets the user specify how many groups to use and the absolute-value boundary for each group.</Criterion>
         <Criterion>Buckets are applied as: group 1 = 0 &lt; diff &le; boundary1, group 2 = boundary1 &lt; diff &le; boundary2, etc.; a final "greater than last boundary" group catches any remainder.</Criterion>
         <Criterion>Changing the grouping settings and re-running updates the Different-entries grouping without needing to re-upload files.</Criterion>
-        <Criterion>Sensible default boundaries are provided (e.g. 0.5, 1, 1.5) if the user doesn't customize them.</Criterion>
+        <Criterion>A sensible default is provided if the user doesn't customize it: a single group with boundary 0.5 (i.e. 0 &lt; diff &le; 0.5, with everything above 0.5 falling into the overflow group).</Criterion>
       </AcceptanceCriteria>
     </Feature>
 
@@ -171,7 +172,7 @@
       <Title>Tree-table results view</Title>
       <Description>Display comparison results as an expandable tree table.</Description>
       <AcceptanceCriteria>
-        <Criterion>Column headers, left to right: each key column's name (in selected order), then each remaining "other" (non-key, non-compare) column's name, then the compare column's name suffixed "(Convertor)" in bold, then the compare column's name suffixed "(Client)" in bold.</Criterion>
+        <Criterion>Column headers, left to right: each key column's name (in selected order), then the compare column's name suffixed "(Convertor)" in bold, then the compare column's name suffixed "(Client)" in bold, then a single "Other columns" column. All remaining "other" (non-key, non-compare) columns are combined into that one column per row, formatted as "ColumnName: Value" pairs separated by "; " (e.g. "Name: Alice; Department: Sales") rather than one column per source column.</Criterion>
         <Criterion>Top level of the tree has four nodes, each showing its label and row count in parentheses: "Matching entries (N)", "Added entries (N)", "Deleted entries (N)", "Different entries (N)".</Criterion>
         <Criterion>Under "Different entries", rows are further grouped by difference-magnitude bucket (from F6), each bucket labeled with its range and count.</Criterion>
         <Criterion>Within any node/bucket, rows are grouped hierarchically by key column values in order: expanding shows the first key column's distinct values (with counts); expanding one of those shows the second key column's distinct values within it; and so on until the last key level, which expands to show the actual matched row(s) with all column values.</Criterion>
@@ -187,8 +188,8 @@
       <AcceptanceCriteria>
         <Criterion>"Download report" button appears once results are shown and triggers a browser file download of an .xlsx workbook.</Criterion>
         <Criterion>Workbook contains a "Summary" sheet with the Matching/Added/Deleted/Different counts, the difference-grouping boundaries used, and any warnings (e.g. duplicate keys).</Criterion>
-        <Criterion>Workbook contains one sheet each for "Matching", "Added", and "Deleted", listing that group's rows with key values, other column values, and both compare values.</Criterion>
-        <Criterion>Workbook contains one additional sheet per difference-magnitude bucket (from F6), named after that bucket's range (e.g. "Diff 0-0.5", "Diff gt 1.5"), each including an AbsoluteDifference column alongside the row data.</Criterion>
+        <Criterion>Workbook contains one sheet each for "Matching", "Added", and "Deleted", listing that group's rows with key values, both compare values, and a combined "Other columns" column (same "ColumnName: Value; ..." format as F7) — matching the tree table's column order: keys, then compare values, then the combined column.</Criterion>
+        <Criterion>Workbook contains one additional sheet per difference-magnitude bucket (from F6), named after that bucket's range (e.g. "Diff 0-0.5", "Diff gt 0.5"), each including an AbsoluteDifference column between the compare values and the combined "Other columns" column.</Criterion>
         <Criterion>Sheet names are sanitized and de-duplicated to satisfy Excel's naming constraints (max 31 characters, no \ / ? * [ ] : characters).</Criterion>
         <Criterion>Umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) in key values, other column values, and column headers are preserved exactly in the exported workbook, matching what is shown in the tree table.</Criterion>
       </AcceptanceCriteria>

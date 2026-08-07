@@ -48,11 +48,11 @@ public class GroupingServiceTests
     }
 
     [Fact]
-    public void DefaultConfig_HasBoundaries_0_5_1_1_5()
+    public void DefaultConfig_HasSingleBoundary_0_5()
     {
         var config = DifferenceGroupingConfig.Default();
 
-        Assert.Equal(new[] { 0.5m, 1m, 1.5m }, config.Groups.Select(g => g.UpperBound));
+        Assert.Equal(new[] { 0.5m }, config.Groups.Select(g => g.UpperBound));
     }
 
     [Fact]

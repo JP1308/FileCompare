@@ -111,16 +111,13 @@ public class ExcelExportService
         {
             sheet.Cell(1, col++).Value = key;
         }
-        foreach (var column in otherColumns)
-        {
-            sheet.Cell(1, col++).Value = column;
-        }
         sheet.Cell(1, col++).Value = $"{compareColumnName} (Convertor)";
         sheet.Cell(1, col++).Value = $"{compareColumnName} (Client)";
         if (includeAbsoluteDifference)
         {
             sheet.Cell(1, col++).Value = "AbsoluteDifference";
         }
+        sheet.Cell(1, col++).Value = "Other columns";
         sheet.Row(1).Style.Font.Bold = true;
 
         var rowIndex = 2;
@@ -131,16 +128,13 @@ public class ExcelExportService
             {
                 sheet.Cell(rowIndex, col++).Value = keyValue;
             }
-            foreach (var column in otherColumns)
-            {
-                sheet.Cell(rowIndex, col++).Value = row.OtherColumnValues.TryGetValue(column, out var v) ? v : string.Empty;
-            }
             sheet.Cell(rowIndex, col++).Value = row.ConvertorCompareValue.HasValue ? row.ConvertorCompareValue.Value : (XLCellValue)string.Empty;
             sheet.Cell(rowIndex, col++).Value = row.ClientCompareValue.HasValue ? row.ClientCompareValue.Value : (XLCellValue)string.Empty;
             if (includeAbsoluteDifference)
             {
                 sheet.Cell(rowIndex, col++).Value = row.AbsoluteDifference.HasValue ? row.AbsoluteDifference.Value : (XLCellValue)string.Empty;
             }
+            sheet.Cell(rowIndex, col++).Value = OtherColumnsFormatter.Combine(row, otherColumns);
             rowIndex++;
         }
 

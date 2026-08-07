@@ -14,8 +14,6 @@ public record DifferenceGroupingConfig
         Groups = new List<GroupBoundary>
         {
             new() { UpperBound = 0.5m },
-            new() { UpperBound = 1m },
-            new() { UpperBound = 1.5m },
         }
     };
 }

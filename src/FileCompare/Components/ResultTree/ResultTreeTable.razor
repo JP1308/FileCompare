@@ -13,12 +13,9 @@
         {
             <div>@key</div>
         }
-        @foreach (var column in OtherColumns)
-        {
-            <div>@column</div>
-        }
         <div><strong>@CompareColumnName (Convertor)</strong></div>
         <div><strong>@CompareColumnName (Client)</strong></div>
+        <div>Other columns</div>
     </div>
 
     <CategoryNode Label="Matching entries" Rows="RowsFor(RowStatus.Matching)" LevelSelectors="BuildLevelSelectors(RowStatus.Matching)"
@@ -48,7 +45,7 @@
 
     protected override void OnParametersSet()
     {
-        var columnCount = KeyColumns.Count + OtherColumns.Count + 2;
+        var columnCount = KeyColumns.Count + 2 + 1;
         _gridTemplateColumns = string.Join(' ', Enumerable.Repeat("minmax(110px, 1fr)", columnCount));
     }
 
