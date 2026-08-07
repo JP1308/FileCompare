@@ -1,0 +1,34 @@
+<select value="@SelectedColumn" @onchange="OnChange">
+    <option value="">-- select compare column --</option>
+    @foreach (var column in NumericCandidateColumns)
+    {
+        <option value="@column">@column</option>
+    }
+</select>
+
+@if (NonNumericExcludedColumns.Count > 0)
+{
+    <div class="upload-hint">
+        Excluded (non-numeric or already used as a key): @string.Join(", ", NonNumericExcludedColumns)
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public List<string> NumericCandidateColumns { get; set; } = new();
+
+    [Parameter]
+    public List<string> NonNumericExcludedColumns { get; set; } = new();
+
+    [Parameter]
+    public string? SelectedColumn { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> SelectedColumnChanged { get; set; }
+
+    private async Task OnChange(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        await SelectedColumnChanged.InvokeAsync(string.IsNullOrEmpty(value) ? null : value);
+    }
+}

@@ -1,0 +1,74 @@
+@using FileCompare.Models
+
+<div class="summary-counts">
+    <span class="summary-chip">Matching: @Result.MatchingCount</span>
+    <span class="summary-chip">Added: @Result.AddedCount</span>
+    <span class="summary-chip">Deleted: @Result.DeletedCount</span>
+    <span class="summary-chip">Different: @Result.DifferentCount</span>
+</div>
+
+<div class="tree">
+    <div class="tree-header-row" style="grid-template-columns: @_gridTemplateColumns">
+        @foreach (var key in KeyColumns)
+        {
+            <div>@key</div>
+        }
+        @foreach (var column in OtherColumns)
+        {
+            <div>@column</div>
+        }
+        <div><strong>@CompareColumnName (Convertor)</strong></div>
+        <div><strong>@CompareColumnName (Client)</strong></div>
+    </div>
+
+    <CategoryNode Label="Matching entries" Rows="RowsFor(RowStatus.Matching)" LevelSelectors="BuildLevelSelectors(RowStatus.Matching)"
+                  KeyColumns="KeyColumns" OtherColumns="OtherColumns" CompareColumnName="@CompareColumnName" GridTemplateColumns="@_gridTemplateColumns" />
+    <CategoryNode Label="Added entries" Rows="RowsFor(RowStatus.Added)" LevelSelectors="BuildLevelSelectors(RowStatus.Added)"
+                  KeyColumns="KeyColumns" OtherColumns="OtherColumns" CompareColumnName="@CompareColumnName" GridTemplateColumns="@_gridTemplateColumns" />
+    <CategoryNode Label="Deleted entries" Rows="RowsFor(RowStatus.Deleted)" LevelSelectors="BuildLevelSelectors(RowStatus.Deleted)"
+                  KeyColumns="KeyColumns" OtherColumns="OtherColumns" CompareColumnName="@CompareColumnName" GridTemplateColumns="@_gridTemplateColumns" />
+    <CategoryNode Label="Different entries" Rows="RowsFor(RowStatus.Different)" LevelSelectors="BuildLevelSelectors(RowStatus.Different)"
+                  KeyColumns="KeyColumns" OtherColumns="OtherColumns" CompareColumnName="@CompareColumnName" GridTemplateColumns="@_gridTemplateColumns" />
+</div>
+
+@code {
+    private string _gridTemplateColumns = string.Empty;
+
+    [Parameter, EditorRequired]
+    public ComparisonResult Result { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<string> KeyColumns { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<string> OtherColumns { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public string CompareColumnName { get; set; } = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        var columnCount = KeyColumns.Count + OtherColumns.Count + 2;
+        _gridTemplateColumns = string.Join(' ', Enumerable.Repeat("minmax(110px, 1fr)", columnCount));
+    }
+
+    private List<RowResult> RowsFor(RowStatus status) => Result.Rows.Where(r => r.Status == status).ToList();
+
+    private List<Func<RowResult, string>> BuildLevelSelectors(RowStatus status)
+    {
+        var selectors = new List<Func<RowResult, string>>();
+
+        if (status == RowStatus.Different)
+        {
+            selectors.Add(r => r.DifferenceGroup ?? "(ungrouped)");
+        }
+
+        for (var i = 0; i < KeyColumns.Count; i++)
+        {
+            var index = i;
+            selectors.Add(r => r.KeyValues[index]);
+        }
+
+        return selectors;
+    }
+}

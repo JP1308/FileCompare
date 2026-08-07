@@ -1,0 +1,71 @@
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="upload-zone @(_isDragOver ? "drag-over" : "") @(FileName is not null ? "has-file" : "")"
+     @ondragenter="() => _isDragOver = true"
+     @ondragleave="() => _isDragOver = false"
+     @ondrop="() => _isDragOver = false"
+     @ondragover:preventDefault="true">
+    <InputFile class="upload-input" OnChange="HandleFileChangeAsync" accept=".csv,.txt" />
+    <div class="upload-label">@Label</div>
+    @if (FileName is null)
+    {
+        <div class="upload-hint">Drag &amp; drop a file here, or click to browse</div>
+    }
+    else
+    {
+        <div class="upload-filename">@FileName</div>
+        <div class="replace-hint">Drop or click to replace</div>
+    }
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="upload-error">@ErrorMessage</div>
+    }
+</div>
+
+@code {
+    private const long MaxFileSizeBytes = 50 * 1024 * 1024;
+
+    private bool _isDragOver;
+
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? FileName { get; set; }
+
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    [Parameter]
+    public EventCallback<(string FileName, string Content)> OnFileLoaded { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnError { get; set; }
+
+    private async Task HandleFileChangeAsync(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        if (file.Size > MaxFileSizeBytes)
+        {
+            await OnError.InvokeAsync($"File '{file.Name}' is {file.Size / 1024 / 1024} MB, which exceeds the 50 MB limit.");
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(MaxFileSizeBytes);
+            using var reader = new StreamReader(stream);
+            var content = await reader.ReadToEndAsync();
+            await OnFileLoaded.InvokeAsync((file.Name, content));
+        }
+        catch (Exception ex)
+        {
+            await OnError.InvokeAsync($"Could not read file '{file.Name}': {ex.Message}");
+        }
+    }
+}

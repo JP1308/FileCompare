@@ -1,0 +1,111 @@
+@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>FileCompare</PageTitle>
+
+<div class="page-container">
+    <h1>FileCompare</h1>
+    <p class="subtitle">Reconcile a Convertor output file against a Client expected file.</p>
+
+    <div class="section">
+        <h2>1. Upload files</h2>
+        <div class="upload-row">
+            <FileDropUpload Label="Convertor output file"
+                             FileName="@_convertorFileName"
+                             ErrorMessage="@_convertorError"
+                             OnFileLoaded="args => OnFileLoadedAsync(true, args.FileName, args.Content)"
+                             OnError="msg => OnFileError(true, msg)" />
+            <FileDropUpload Label="Client expected file"
+                             FileName="@_clientFileName"
+                             ErrorMessage="@_clientError"
+                             OnFileLoaded="args => OnFileLoadedAsync(false, args.FileName, args.Content)"
+                             OnError="msg => OnFileError(false, msg)" />
+        </div>
+    </div>
+
+    @if (_headerMismatchErrors.Count > 0)
+    {
+        <div class="error-banner">
+            <strong>Header mismatch — comparison blocked.</strong>
+            <ul>
+                @foreach (var error in _headerMismatchErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (_rowParseErrors.Count > 0)
+    {
+        <div class="warning-banner">
+            <strong>Some rows were skipped while parsing:</strong>
+            <ul>
+                @foreach (var error in _rowParseErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (_headersReady)
+    {
+        <div class="section">
+            <h2>2. Select key column(s)</h2>
+            <DualListKeySelector AvailableColumns="_availableKeyColumns"
+                                  SelectedKeyColumns="_selectedKeyColumns"
+                                  SelectedKeyColumnsChanged="OnSelectedKeysChanged" />
+        </div>
+
+        @if (_selectedKeyColumns.Count > 0)
+        {
+            <div class="section">
+                <h2>3. Select compare column</h2>
+                <CompareColumnSelector NumericCandidateColumns="_numericCandidateColumns"
+                                        NonNumericExcludedColumns="_nonNumericExcludedColumns"
+                                        SelectedColumn="@_compareColumnName"
+                                        SelectedColumnChanged="OnCompareColumnChanged" />
+            </div>
+
+            <div class="section">
+                <h2>4. Difference-magnitude grouping</h2>
+                <GroupingSettings Config="_groupingConfig" ConfigChanged="OnGroupingConfigChanged" />
+            </div>
+
+            <div class="compare-actions">
+                <button class="primary" disabled="@(!CanCompare || _isComparing)" @onclick="RunCompareAsync">
+                    @(_isComparing ? "Comparing..." : "Compare")
+                </button>
+                @if (_comparisonResult is not null)
+                {
+                    <button @onclick="DownloadReportAsync">Download report</button>
+                }
+            </div>
+        }
+    }
+
+    @if (_comparisonWarnings.Count > 0)
+    {
+        <div class="warning-banner">
+            <strong>Warnings:</strong>
+            <ul>
+                @foreach (var warning in _comparisonWarnings)
+                {
+                    <li>@warning</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (_comparisonResult is not null && _compareColumnName is not null)
+    {
+        <div class="section">
+            <h2>5. Results</h2>
+            <ResultTreeTable Result="_comparisonResult"
+                              KeyColumns="_selectedKeyColumns"
+                              OtherColumns="_otherColumns"
+                              CompareColumnName="@_compareColumnName" />
+        </div>
+    }
+</div>

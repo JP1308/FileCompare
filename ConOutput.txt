@@ -1,0 +1,8 @@
+PersonalNr;Periodendatum;Periodennummer;Lohnart;TextLohnart;Betrag;
+114;31.01.2026;0;6200;AN-Zusatzbeitrag;399.45;
+114;31.01.2026;0;6200;AN-Beitrag;1098.45;
+114;31.01.2026;0;9700;AG-Riskobeitrag;166.45;
+114;31.01.2026;0;9701;AG-Beitrag;1497.90;
+1130;31.01.2026;0;6200;AN-Beitrag;696.45;
+1130;31.01.2026;0;9700;AG-Riskobeitrag;90.05;
+1130;31.01.2026;0;9701;AG-Beitrag;1026.70;

@@ -1,0 +1,124 @@
+<div class="dual-list">
+    <div class="dual-list-column">
+        <h3>Available Columns</h3>
+        <ul class="dual-list-box">
+            @foreach (var column in AvailableColumns)
+            {
+                <li class="@(column == _selectedAvailable ? "selected" : "")"
+                    @onclick="() => _selectedAvailable = column"
+                    @ondblclick="() => MoveToSelected(column)">
+                    @column
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="dual-list-controls">
+        <button type="button" title="Add to keys" disabled="@(_selectedAvailable is null)" @onclick="() => MoveToSelected(_selectedAvailable)">&gt;</button>
+        <button type="button" title="Remove from keys" disabled="@(_selectedKey is null)" @onclick="() => MoveToAvailable(_selectedKey)">&lt;</button>
+    </div>
+
+    <div class="dual-list-column">
+        <h3>Selected Key Columns</h3>
+        <ul class="dual-list-box">
+            @foreach (var column in SelectedKeyColumns)
+            {
+                <li class="@(column == _selectedKey ? "selected" : "")"
+                    @onclick="() => _selectedKey = column"
+                    @ondblclick="() => MoveToAvailable(column)">
+                    @column
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="reorder-controls">
+        <button type="button" title="Move up" disabled="@(!CanMoveUp)" @onclick="MoveUp">&uarr;</button>
+        <button type="button" title="Move down" disabled="@(!CanMoveDown)" @onclick="MoveDown">&darr;</button>
+    </div>
+</div>
+
+@code {
+    private string? _selectedAvailable;
+    private string? _selectedKey;
+
+    [Parameter, EditorRequired]
+    public List<string> AvailableColumns { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<string> SelectedKeyColumns { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<string>> SelectedKeyColumnsChanged { get; set; }
+
+    private bool CanMoveUp => _selectedKey is not null && SelectedKeyColumns.IndexOf(_selectedKey) > 0;
+
+    private bool CanMoveDown => _selectedKey is not null &&
+        SelectedKeyColumns.IndexOf(_selectedKey) < SelectedKeyColumns.Count - 1;
+
+    private async Task MoveToSelected(string? column)
+    {
+        if (column is null)
+        {
+            return;
+        }
+
+        SelectedKeyColumns.Add(column);
+        AvailableColumns.Remove(column);
+        if (_selectedAvailable == column)
+        {
+            _selectedAvailable = null;
+        }
+        await SelectedKeyColumnsChanged.InvokeAsync(SelectedKeyColumns);
+    }
+
+    private async Task MoveToAvailable(string? column)
+    {
+        if (column is null)
+        {
+            return;
+        }
+
+        AvailableColumns.Add(column);
+        SelectedKeyColumns.Remove(column);
+        if (_selectedKey == column)
+        {
+            _selectedKey = null;
+        }
+        await SelectedKeyColumnsChanged.InvokeAsync(SelectedKeyColumns);
+    }
+
+    private async Task MoveUp()
+    {
+        if (_selectedKey is null)
+        {
+            return;
+        }
+
+        var index = SelectedKeyColumns.IndexOf(_selectedKey);
+        if (index <= 0)
+        {
+            return;
+        }
+
+        (SelectedKeyColumns[index - 1], SelectedKeyColumns[index]) = (SelectedKeyColumns[index], SelectedKeyColumns[index - 1]);
+        await SelectedKeyColumnsChanged.InvokeAsync(SelectedKeyColumns);
+    }
+
+    private async Task MoveDown()
+    {
+        if (_selectedKey is null)
+        {
+            return;
+        }
+
+        var index = SelectedKeyColumns.IndexOf(_selectedKey);
+        if (index < 0 || index >= SelectedKeyColumns.Count - 1)
+        {
+            return;
+        }
+
+        (SelectedKeyColumns[index + 1], SelectedKeyColumns[index]) = (SelectedKeyColumns[index], SelectedKeyColumns[index + 1]);
+        await SelectedKeyColumnsChanged.InvokeAsync(SelectedKeyColumns);
+    }
+}

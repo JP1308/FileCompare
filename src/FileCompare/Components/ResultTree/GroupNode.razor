@@ -1,0 +1,87 @@
+@using FileCompare.Models
+
+@foreach (var group in _groups)
+{
+    <div class="tree-node">
+        <div class="tree-node-label" @onclick="() => Toggle(group.Key)">
+            <span class="caret @(IsExpanded(group.Key) ? "expanded" : "")">&#9656;</span>
+            <span>@group.Key (@group.Rows.Count)</span>
+        </div>
+        @if (IsExpanded(group.Key))
+        {
+            <div class="tree-node-children">
+                @if (LevelSelectors.Count > 1)
+                {
+                    <GroupNode Rows="group.Rows"
+                               LevelSelectors="LevelSelectors.Skip(1).ToList()"
+                               KeyColumns="KeyColumns"
+                               OtherColumns="OtherColumns"
+                               CompareColumnName="@CompareColumnName"
+                               GridTemplateColumns="@GridTemplateColumns" />
+                }
+                else
+                {
+                    @foreach (var row in group.Rows)
+                    {
+                        <div class="tree-row status-@row.Status.ToString().ToLowerInvariant()" style="grid-template-columns: @GridTemplateColumns">
+                            @foreach (var key in row.KeyValues)
+                            {
+                                <div>@key</div>
+                            }
+                            @foreach (var column in OtherColumns)
+                            {
+                                <div>@(row.OtherColumnValues.TryGetValue(column, out var v) ? v : string.Empty)</div>
+                            }
+                            <div class="field-compare">@(row.ConvertorCompareValue?.ToString() ?? "—")</div>
+                            <div class="field-compare">@(row.ClientCompareValue?.ToString() ?? "—")</div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private readonly HashSet<string> _expandedKeys = new();
+    private List<GroupEntry> _groups = new();
+
+    [Parameter, EditorRequired]
+    public List<RowResult> Rows { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<Func<RowResult, string>> LevelSelectors { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<string> KeyColumns { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<string> OtherColumns { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public string CompareColumnName { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string GridTemplateColumns { get; set; } = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        var selector = LevelSelectors.Count > 0 ? LevelSelectors[0] : (_ => string.Empty);
+        _groups = Rows
+            .GroupBy(selector)
+            .Select(g => new GroupEntry(g.Key, g.ToList()))
+            .ToList();
+    }
+
+    private bool IsExpanded(string key) => _expandedKeys.Contains(key);
+
+    private void Toggle(string key)
+    {
+        if (!_expandedKeys.Add(key))
+        {
+            _expandedKeys.Remove(key);
+        }
+    }
+
+    private record GroupEntry(string Key, List<RowResult> Rows);
+}

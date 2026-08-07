@@ -1,0 +1,46 @@
+@using FileCompare.Models
+
+<div class="tree-node">
+    <div class="tree-node-label" @onclick="Toggle">
+        <span class="caret @(_expanded ? "expanded" : "")">&#9656;</span>
+        <span>@Label (@Rows.Count)</span>
+    </div>
+    @if (_expanded && Rows.Count > 0)
+    {
+        <div class="tree-node-children">
+            <GroupNode Rows="Rows"
+                       LevelSelectors="LevelSelectors"
+                       KeyColumns="KeyColumns"
+                       OtherColumns="OtherColumns"
+                       CompareColumnName="@CompareColumnName"
+                       GridTemplateColumns="@GridTemplateColumns" />
+        </div>
+    }
+</div>
+
+@code {
+    private bool _expanded;
+
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public List<RowResult> Rows { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<Func<RowResult, string>> LevelSelectors { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<string> KeyColumns { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public List<string> OtherColumns { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public string CompareColumnName { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string GridTemplateColumns { get; set; } = string.Empty;
+
+    private void Toggle() => _expanded = !_expanded;
+}
