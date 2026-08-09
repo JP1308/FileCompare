@@ -16,7 +16,7 @@ public class ExcelExportServiceTests
             {
                 KeyValues = new List<string> { "1", "A1" },
                 OtherColumnValues = new Dictionary<string, string> { ["Name"] = "Alice" },
-                ConvertorCompareValue = 100m,
+                ConverterCompareValue = 100m,
                 ClientCompareValue = 100m,
                 Status = RowStatus.Matching,
             },
@@ -24,7 +24,7 @@ public class ExcelExportServiceTests
             {
                 KeyValues = new List<string> { "2", "A2" },
                 OtherColumnValues = new Dictionary<string, string> { ["Name"] = "Bob" },
-                ConvertorCompareValue = 100m,
+                ConverterCompareValue = 100m,
                 ClientCompareValue = 100.3m,
                 Status = RowStatus.Different,
                 AbsoluteDifference = 0.3m,
@@ -34,7 +34,7 @@ public class ExcelExportServiceTests
             {
                 KeyValues = new List<string> { "3", "A3" },
                 OtherColumnValues = new Dictionary<string, string> { ["Name"] = "Carol" },
-                ConvertorCompareValue = 100m,
+                ConverterCompareValue = 100m,
                 Status = RowStatus.Added,
             },
             new()
@@ -45,7 +45,7 @@ public class ExcelExportServiceTests
                 Status = RowStatus.Deleted,
             },
         },
-        Warnings = new List<string> { "Duplicate key (5, A5) found in Convertor output file; only the first occurrence is used." },
+        Warnings = new List<string> { "Duplicate key (5, A5) found in Converter output file; only the first occurrence is used." },
     };
 
     private static List<string> KeyColumns => new() { "PersonalNr", "Lohnart" };
@@ -78,7 +78,7 @@ public class ExcelExportServiceTests
 
         Assert.Equal("Matching", summary.Cell(2, 1).GetString());
         Assert.Equal(1, summary.Cell(2, 2).GetValue<int>());
-        Assert.Equal("Added (Rows found only in the Convertor output file)", summary.Cell(3, 1).GetString());
+        Assert.Equal("Added (Rows found only in the Converter output file)", summary.Cell(3, 1).GetString());
         Assert.Equal(1, summary.Cell(3, 2).GetValue<int>());
         Assert.Equal("Deleted (Rows found only in the Client expected file)", summary.Cell(4, 1).GetString());
         Assert.Equal(1, summary.Cell(4, 2).GetValue<int>());
@@ -126,7 +126,7 @@ public class ExcelExportServiceTests
 
         Assert.Equal("PersonalNr", sheet.Cell(1, 1).GetString());
         Assert.Equal("Lohnart", sheet.Cell(1, 2).GetString());
-        Assert.Equal("Betrag (Convertor)", sheet.Cell(1, 3).GetString());
+        Assert.Equal("Betrag (Converter)", sheet.Cell(1, 3).GetString());
         Assert.Equal("Betrag (Client)", sheet.Cell(1, 4).GetString());
         Assert.Equal("Name", sheet.Cell(1, 5).GetString());
         Assert.Equal("Alice", sheet.Cell(2, 5).GetString());

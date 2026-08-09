@@ -5,7 +5,7 @@
 
 <div class="page-container">
     <h1>FileCompare</h1>
-    <p class="subtitle">Reconcile a Convertor output file against a Client expected file.</p>
+    <p class="subtitle">Reconcile a Converter output file against a Client expected file.</p>
 
     <div class="section">
         <h2>1. File type</h2>
@@ -15,9 +15,9 @@
     <div class="section">
         <h2>2. Upload files</h2>
         <div class="upload-row">
-            <FileDropUpload Label="Convertor output file"
-                             FileName="@_convertorFileName"
-                             ErrorMessage="@_convertorError"
+            <FileDropUpload Label="Converter output file"
+                             FileName="@_converterFileName"
+                             ErrorMessage="@_converterError"
                              AcceptExtensions="@AcceptExtensionsForCurrentFormat"
                              OnFileLoaded="args => OnFileLoadedAsync(true, args.FileName, args.Content)"
                              OnError="msg => OnFileError(true, msg)" />

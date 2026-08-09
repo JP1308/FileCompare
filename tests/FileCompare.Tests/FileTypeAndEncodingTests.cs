@@ -68,10 +68,10 @@ public class FileTypeAndEncodingTests
     [Fact]
     public void ValidateHeaders_UmlautCaseVariant_IsTreatedAsEquivalent()
     {
-        var convertor = _sut.Parse("PersonalNr;Überstunden;Betrag\n1;5;10.5\n", ';');
+        var converter = _sut.Parse("PersonalNr;Überstunden;Betrag\n1;5;10.5\n", ';');
         var client = _sut.Parse("PersonalNr;überstunden;Betrag\n1;5;10.5\n", ';');
 
-        var exception = Record.Exception(() => _sut.ValidateHeaders(convertor, client));
+        var exception = Record.Exception(() => _sut.ValidateHeaders(converter, client));
 
         Assert.Null(exception);
     }
@@ -79,24 +79,24 @@ public class FileTypeAndEncodingTests
     [Fact]
     public void ValidateHeaders_NonUmlautCaseDifference_StillMismatches()
     {
-        var convertor = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10.5\n", ';');
+        var converter = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10.5\n", ';');
         var client = _sut.Parse("PersonalNr;lohnart;Betrag\n1;A1;10.5\n", ';');
 
-        Assert.Throws<HeaderMismatchException>(() => _sut.ValidateHeaders(convertor, client));
+        Assert.Throws<HeaderMismatchException>(() => _sut.ValidateHeaders(converter, client));
     }
 
     [Fact]
     public void ComparisonService_MatchesRowsAcrossFiles_WhenHeaderCasingDiffersOnlyInUmlauts()
     {
         var parser = new FileParserService();
-        var convertor = parser.Parse("PersonalNr;Überstunden;Betrag\n1;5;100.00\n", ';');
+        var converter = parser.Parse("PersonalNr;Überstunden;Betrag\n1;5;100.00\n", ';');
         var client = parser.Parse("PersonalNr;überstunden;Betrag\n1;5;100.00\n", ';');
 
         var comparisonService = new ComparisonService();
         var keySelection = new KeySelection { OrderedKeyColumns = new List<string> { "PersonalNr", "Überstunden" } };
         var compareSelection = new CompareColumnSelection { ColumnName = "Betrag" };
 
-        var result = comparisonService.Compare(convertor, client, keySelection, compareSelection);
+        var result = comparisonService.Compare(converter, client, keySelection, compareSelection);
 
         var row = Assert.Single(result.Rows);
         Assert.Equal(RowStatus.Matching, row.Status);

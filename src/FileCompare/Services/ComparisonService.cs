@@ -13,21 +13,21 @@ public class ComparisonService
         return file.Rows.All(row => decimal.TryParse(row[columnName], NumberStyles.Number, CultureInfo.InvariantCulture, out _));
     }
 
-    public ComparisonResult Compare(ParsedFile convertorFile, ParsedFile clientFile, KeySelection keySelection, CompareColumnSelection compareColumn)
+    public ComparisonResult Compare(ParsedFile converterFile, ParsedFile clientFile, KeySelection keySelection, CompareColumnSelection compareColumn)
     {
         var warnings = new List<string>();
 
-        var convertorByKey = IndexByKey(convertorFile, keySelection.OrderedKeyColumns, "Convertor output file", warnings);
+        var converterByKey = IndexByKey(converterFile, keySelection.OrderedKeyColumns, "Converter output file", warnings);
         var clientByKey = IndexByKey(clientFile, keySelection.OrderedKeyColumns, "Client expected file", warnings);
 
-        var otherColumns = convertorFile.Headers
+        var otherColumns = converterFile.Headers
             .Where(h => !keySelection.OrderedKeyColumns.Contains(h) && h != compareColumn.ColumnName)
             .ToList();
 
-        var allKeys = new List<string>(convertorByKey.Keys);
+        var allKeys = new List<string>(converterByKey.Keys);
         foreach (var key in clientByKey.Keys)
         {
-            if (!convertorByKey.ContainsKey(key))
+            if (!converterByKey.ContainsKey(key))
             {
                 allKeys.Add(key);
             }
@@ -37,32 +37,32 @@ public class ComparisonService
 
         foreach (var key in allKeys)
         {
-            var hasConvertor = convertorByKey.TryGetValue(key, out var convertorRow);
+            var hasConverter = converterByKey.TryGetValue(key, out var converterRow);
             var hasClient = clientByKey.TryGetValue(key, out var clientRow);
 
-            var sourceRow = convertorRow ?? clientRow!;
+            var sourceRow = converterRow ?? clientRow!;
             var keyValues = keySelection.OrderedKeyColumns.Select(k => sourceRow[k]).ToList();
             var otherValues = otherColumns.ToDictionary(c => c, c => sourceRow.TryGetValue(c, out var v) ? v : string.Empty);
 
-            decimal? convertorValue = hasConvertor ? ParseCompareValue(convertorRow!, compareColumn.ColumnName) : null;
+            decimal? converterValue = hasConverter ? ParseCompareValue(converterRow!, compareColumn.ColumnName) : null;
             decimal? clientValue = hasClient ? ParseCompareValue(clientRow!, compareColumn.ColumnName) : null;
 
             RowStatus status;
             decimal? absoluteDifference = null;
 
-            if (hasConvertor && hasClient)
+            if (hasConverter && hasClient)
             {
-                if (convertorValue == clientValue)
+                if (converterValue == clientValue)
                 {
                     status = RowStatus.Matching;
                 }
                 else
                 {
                     status = RowStatus.Different;
-                    absoluteDifference = Math.Abs((convertorValue ?? 0) - (clientValue ?? 0));
+                    absoluteDifference = Math.Abs((converterValue ?? 0) - (clientValue ?? 0));
                 }
             }
-            else if (hasConvertor)
+            else if (hasConverter)
             {
                 status = RowStatus.Added;
             }
@@ -75,7 +75,7 @@ public class ComparisonService
             {
                 KeyValues = keyValues,
                 OtherColumnValues = otherValues,
-                ConvertorCompareValue = convertorValue,
+                ConverterCompareValue = converterValue,
                 ClientCompareValue = clientValue,
                 Status = status,
                 AbsoluteDifference = absoluteDifference,

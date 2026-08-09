@@ -1,6 +1,6 @@
 # FileCompare
 
-A Blazor Server single-page reconciliation tool that compares a "Convertor output file" against a "Client expected file" (CSV or delimited text, first row = headers), matches rows on a user-selected composite key, compares one numeric column, and shows the results as an expandable tree table grouped by key.
+A Blazor Server single-page reconciliation tool that compares a "Converter output file" against a "Client expected file" (CSV or delimited text, first row = headers), matches rows on a user-selected composite key, compares one numeric column, and shows the results as an expandable tree table grouped by key.
 
 ## Solution layout
 
@@ -13,7 +13,7 @@ src/FileCompare/            Blazor Server app (net8.0)
   Components/FileUpload/    FileDropUpload, FileTypeSelector, DualListKeySelector, CompareColumnSelector, GroupingSettings
   Components/ResultTree/    ResultTreeTable, CategoryNode, GroupNode
 tests/FileCompare.Tests/    xUnit tests for the Services layer
-SampleData/                 Sample Convertor/Client files for manual testing
+SampleData/                 Sample Converter/Client files for manual testing
 ```
 
 ## Running the app
@@ -24,9 +24,9 @@ Requires the .NET 8 SDK (or later).
 dotnet run --project src/FileCompare
 ```
 
-Then open the printed `https://localhost:xxxx` URL. Upload `SampleData/Convertor.csv` as the "Convertor output file" and `SampleData/Client.csv` as the "Client expected file" to try the full workflow — the sample data covers Matching, Different (across all default buckets), Added, and Deleted rows.
+Then open the printed `https://localhost:xxxx` URL. Upload `SampleData/Converter.csv` as the "Converter output file" and `SampleData/Client.csv` as the "Client expected file" to try the full workflow — the sample data covers Matching, Different (across all default buckets), Added, and Deleted rows.
 
-To see the header-mismatch error banner, try uploading `SampleData/Convertor_HeaderMismatch.csv` (its last column is named `Amount` instead of `Betrag`) alongside `SampleData/Client.csv`.
+To see the header-mismatch error banner, try uploading `SampleData/Converter_HeaderMismatch.csv` (its last column is named `Amount` instead of `Betrag`) alongside `SampleData/Client.csv`.
 
 ## Running the tests
 
@@ -43,9 +43,9 @@ dotnet test
 5. **Select the compare column** — only numeric, non-key columns are offered; `Betrag` is pre-selected by default if present and numeric.
 6. **Configure difference-magnitude grouping** (default: a single group, boundary 0.5) — these buckets can be changed and re-applied after a comparison without re-uploading files.
 7. Click **Compare**. Results appear as an expandable tree: Matching / Added / Deleted / Different at the top level (Different further split by magnitude bucket), then drilled down by each key column's values down to the individual row(s).
-8. Optionally **Download report** to export the result as a multi-sheet Excel workbook (`comparison-report.xlsx`): a **Summary** sheet (counts, with Added/Deleted labeled "Added (Rows found only in the Convertor output file)" / "Deleted (Rows found only in the Client expected file)"; the grouping boundaries used, each with its own row count; and any warnings), then **Matching**, **Added**, **Deleted** sheets, then one sheet per difference-magnitude bucket (e.g. "Diff 0-0.5", "Diff gt 0.5"), each with an `AbsoluteDifference` column.
+8. Optionally **Download report** to export the result as a multi-sheet Excel workbook (`comparison-report.xlsx`): a **Summary** sheet (counts, with Added/Deleted labeled "Added (Rows found only in the Converter output file)" / "Deleted (Rows found only in the Client expected file)"; the grouping boundaries used, each with its own row count; and any warnings), then **Matching**, **Added**, **Deleted** sheets, then one sheet per difference-magnitude bucket (e.g. "Diff 0-0.5", "Diff gt 0.5"), each with an `AbsoluteDifference` column.
 
-Every result sheet (and the on-page tree table) shows columns in this order: key columns, `{compare column} (Convertor)`, `{compare column} (Client)`, an `AbsoluteDifference` column (bucket sheets only), then a single combined column for all remaining non-key, non-compare columns — its header is the joined column names (e.g. `Name; Department`) and each row's value is just the joined values in that order (e.g. `Alice; Sales`), with no column-name prefix.
+Every result sheet (and the on-page tree table) shows columns in this order: key columns, `{compare column} (Converter)`, `{compare column} (Client)`, an `AbsoluteDifference` column (bucket sheets only), then a single combined column for all remaining non-key, non-compare columns — its header is the joined column names (e.g. `Name; Department`) and each row's value is just the joined values in that order (e.g. `Alice; Sales`), with no column-name prefix.
 
 ### Delimited-text encoding
 

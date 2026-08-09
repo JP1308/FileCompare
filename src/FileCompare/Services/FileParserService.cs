@@ -54,17 +54,17 @@ public class FileParserService
         return new ParsedFile { Headers = headers, Rows = rows, RowErrors = rowErrors };
     }
 
-    public void ValidateHeaders(ParsedFile convertorFile, ParsedFile clientFile)
+    public void ValidateHeaders(ParsedFile converterFile, ParsedFile clientFile)
     {
-        var convertorSet = new HashSet<string>(convertorFile.Headers, UmlautInsensitiveComparer.Instance);
+        var converterSet = new HashSet<string>(converterFile.Headers, UmlautInsensitiveComparer.Instance);
         var clientSet = new HashSet<string>(clientFile.Headers, UmlautInsensitiveComparer.Instance);
 
-        var onlyInConvertor = convertorFile.Headers.Where(h => !clientSet.Contains(h)).ToList();
-        var onlyInClient = clientFile.Headers.Where(h => !convertorSet.Contains(h)).ToList();
+        var onlyInConverter = converterFile.Headers.Where(h => !clientSet.Contains(h)).ToList();
+        var onlyInClient = clientFile.Headers.Where(h => !converterSet.Contains(h)).ToList();
 
-        if (onlyInConvertor.Count > 0 || onlyInClient.Count > 0)
+        if (onlyInConverter.Count > 0 || onlyInClient.Count > 0)
         {
-            throw new HeaderMismatchException(onlyInConvertor, onlyInClient);
+            throw new HeaderMismatchException(onlyInConverter, onlyInClient);
         }
     }
 

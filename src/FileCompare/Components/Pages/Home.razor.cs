@@ -18,13 +18,13 @@ public partial class Home : ComponentBase
 
     private FileTypeSelection _fileTypeSelection = FileTypeSelection.Default();
 
-    private byte[]? _convertorRawBytes;
+    private byte[]? _converterRawBytes;
     private byte[]? _clientRawBytes;
-    private ParsedFile? _convertorFile;
+    private ParsedFile? _converterFile;
     private ParsedFile? _clientFile;
-    private string? _convertorFileName;
+    private string? _converterFileName;
     private string? _clientFileName;
-    private string? _convertorError;
+    private string? _converterError;
     private string? _clientError;
 
     private readonly List<string> _headerMismatchErrors = new();
@@ -47,11 +47,11 @@ public partial class Home : ComponentBase
 
     private bool CanCompare => _selectedKeyColumns.Count > 0 && !string.IsNullOrEmpty(_compareColumnName);
 
-    private void OnFileError(bool isConvertor, string message)
+    private void OnFileError(bool isConverter, string message)
     {
-        if (isConvertor)
+        if (isConverter)
         {
-            _convertorError = message;
+            _converterError = message;
         }
         else
         {
@@ -60,12 +60,12 @@ public partial class Home : ComponentBase
         StateHasChanged();
     }
 
-    private async Task OnFileLoadedAsync(bool isConvertor, string fileName, byte[] content)
+    private async Task OnFileLoadedAsync(bool isConverter, string fileName, byte[] content)
     {
-        if (isConvertor)
+        if (isConverter)
         {
-            _convertorRawBytes = content;
-            _convertorFileName = fileName;
+            _converterRawBytes = content;
+            _converterFileName = fileName;
         }
         else
         {
@@ -73,7 +73,7 @@ public partial class Home : ComponentBase
             _clientFileName = fileName;
         }
 
-        await ParseAndStoreAsync(isConvertor, content, fileName);
+        await ParseAndStoreAsync(isConverter, content, fileName);
         RebuildRowParseErrors();
         await ValidateAndResetAsync();
     }
@@ -82,9 +82,9 @@ public partial class Home : ComponentBase
     {
         _fileTypeSelection = selection;
 
-        if (_convertorRawBytes is not null)
+        if (_converterRawBytes is not null)
         {
-            await ParseAndStoreAsync(true, _convertorRawBytes, _convertorFileName ?? "Convertor output file");
+            await ParseAndStoreAsync(true, _converterRawBytes, _converterFileName ?? "Converter output file");
         }
         if (_clientRawBytes is not null)
         {
@@ -95,16 +95,16 @@ public partial class Home : ComponentBase
         await ValidateAndResetAsync();
     }
 
-    private async Task ParseAndStoreAsync(bool isConvertor, byte[] bytes, string fileName)
+    private async Task ParseAndStoreAsync(bool isConverter, byte[] bytes, string fileName)
     {
         try
         {
             var parsed = await Task.Run(() => ParseBytes(bytes));
 
-            if (isConvertor)
+            if (isConverter)
             {
-                _convertorFile = parsed;
-                _convertorError = null;
+                _converterFile = parsed;
+                _converterError = null;
             }
             else
             {
@@ -114,15 +114,15 @@ public partial class Home : ComponentBase
         }
         catch (Exception ex)
         {
-            if (isConvertor)
+            if (isConverter)
             {
-                _convertorFile = null;
+                _converterFile = null;
             }
             else
             {
                 _clientFile = null;
             }
-            OnFileError(isConvertor, $"Failed to parse '{fileName}': {ex.Message}");
+            OnFileError(isConverter, $"Failed to parse '{fileName}': {ex.Message}");
         }
     }
 
@@ -141,9 +141,9 @@ public partial class Home : ComponentBase
     private void RebuildRowParseErrors()
     {
         _rowParseErrors.Clear();
-        if (_convertorFile is not null)
+        if (_converterFile is not null)
         {
-            _rowParseErrors.AddRange(_convertorFile.RowErrors.Select(e => $"Convertor output file — {e}"));
+            _rowParseErrors.AddRange(_converterFile.RowErrors.Select(e => $"Converter output file — {e}"));
         }
         if (_clientFile is not null)
         {
@@ -159,20 +159,20 @@ public partial class Home : ComponentBase
         _rawComparisonResult = null;
         _comparisonWarnings.Clear();
 
-        if (_convertorFile is null || _clientFile is null)
+        if (_converterFile is null || _clientFile is null)
         {
             return Task.CompletedTask;
         }
 
         try
         {
-            ParserService.ValidateHeaders(_convertorFile, _clientFile);
+            ParserService.ValidateHeaders(_converterFile, _clientFile);
         }
         catch (HeaderMismatchException ex)
         {
-            if (ex.OnlyInConvertorFile.Count > 0)
+            if (ex.OnlyInConverterFile.Count > 0)
             {
-                _headerMismatchErrors.Add($"Only in Convertor output file: {string.Join(", ", ex.OnlyInConvertorFile)}");
+                _headerMismatchErrors.Add($"Only in Converter output file: {string.Join(", ", ex.OnlyInConverterFile)}");
             }
             if (ex.OnlyInClientFile.Count > 0)
             {
@@ -192,7 +192,7 @@ public partial class Home : ComponentBase
 
     private void InitializeKeySelectionDefaults()
     {
-        var headers = _convertorFile!.Headers;
+        var headers = _converterFile!.Headers;
         _selectedKeyColumns = DefaultKeyColumnCandidates.Where(headers.Contains).ToList();
         _availableKeyColumns = headers.Where(h => !_selectedKeyColumns.Contains(h)).ToList();
     }
@@ -207,11 +207,11 @@ public partial class Home : ComponentBase
 
     private void RecomputeCompareColumnCandidates()
     {
-        var headers = _convertorFile!.Headers;
+        var headers = _converterFile!.Headers;
         var nonKeyColumns = headers.Where(h => !_selectedKeyColumns.Contains(h)).ToList();
 
         _numericCandidateColumns = nonKeyColumns
-            .Where(c => ComparisonService.IsColumnNumeric(_convertorFile!, c) && ComparisonService.IsColumnNumeric(_clientFile!, c))
+            .Where(c => ComparisonService.IsColumnNumeric(_converterFile!, c) && ComparisonService.IsColumnNumeric(_clientFile!, c))
             .ToList();
 
         _nonNumericExcludedColumns = nonKeyColumns.Except(_numericCandidateColumns).ToList();
@@ -224,7 +224,7 @@ public partial class Home : ComponentBase
 
     private void RecomputeOtherColumns()
     {
-        _otherColumns = _convertorFile!.Headers
+        _otherColumns = _converterFile!.Headers
             .Where(h => !_selectedKeyColumns.Contains(h) && h != _compareColumnName)
             .ToList();
     }
@@ -253,7 +253,7 @@ public partial class Home : ComponentBase
 
     private async Task RunCompareAsync()
     {
-        if (!CanCompare || _convertorFile is null || _clientFile is null || _compareColumnName is null)
+        if (!CanCompare || _converterFile is null || _clientFile is null || _compareColumnName is null)
         {
             return;
         }
@@ -267,7 +267,7 @@ public partial class Home : ComponentBase
             var compareSelection = new CompareColumnSelection { ColumnName = _compareColumnName };
 
             _rawComparisonResult = await Task.Run(() =>
-                ComparisonService.Compare(_convertorFile, _clientFile, keySelection, compareSelection));
+                ComparisonService.Compare(_converterFile, _clientFile, keySelection, compareSelection));
             _comparisonResult = GroupingService.ApplyGrouping(_rawComparisonResult, _groupingConfig);
             _comparisonWarnings = _rawComparisonResult.Warnings;
         }

@@ -14,10 +14,10 @@ public class ComparisonServiceTests
     [Fact]
     public void Compare_EqualCompareValues_StatusIsMatching()
     {
-        var convertor = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100.00\n");
+        var converter = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100.00\n");
         var client = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100.00\n");
 
-        var result = _sut.Compare(convertor, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
+        var result = _sut.Compare(converter, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
 
         var row = Assert.Single(result.Rows);
         Assert.Equal(RowStatus.Matching, row.Status);
@@ -27,10 +27,10 @@ public class ComparisonServiceTests
     [Fact]
     public void Compare_DifferingCompareValues_StatusIsDifferentWithAbsoluteDifference()
     {
-        var convertor = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100.00\n");
+        var converter = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100.00\n");
         var client = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;97.50\n");
 
-        var result = _sut.Compare(convertor, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
+        var result = _sut.Compare(converter, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
 
         var row = Assert.Single(result.Rows);
         Assert.Equal(RowStatus.Different, row.Status);
@@ -38,12 +38,12 @@ public class ComparisonServiceTests
     }
 
     [Fact]
-    public void Compare_KeyOnlyInConvertorFile_StatusIsAdded()
+    public void Compare_KeyOnlyInConverterFile_StatusIsAdded()
     {
-        var convertor = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100\n");
+        var converter = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100\n");
         var client = _parser.Parse("PersonalNr;Lohnart;Betrag\n");
 
-        var result = _sut.Compare(convertor, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
+        var result = _sut.Compare(converter, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
 
         var row = Assert.Single(result.Rows);
         Assert.Equal(RowStatus.Added, row.Status);
@@ -52,10 +52,10 @@ public class ComparisonServiceTests
     [Fact]
     public void Compare_KeyOnlyInClientFile_StatusIsDeleted()
     {
-        var convertor = _parser.Parse("PersonalNr;Lohnart;Betrag\n");
+        var converter = _parser.Parse("PersonalNr;Lohnart;Betrag\n");
         var client = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100\n");
 
-        var result = _sut.Compare(convertor, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
+        var result = _sut.Compare(converter, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
 
         var row = Assert.Single(result.Rows);
         Assert.Equal(RowStatus.Deleted, row.Status);
@@ -64,10 +64,10 @@ public class ComparisonServiceTests
     [Fact]
     public void Compare_DuplicateKeyWithinAFile_IsReportedAsWarningNotCrash()
     {
-        var convertor = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100\n1;A1;105\n");
+        var converter = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100\n1;A1;105\n");
         var client = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100\n");
 
-        var result = _sut.Compare(convertor, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
+        var result = _sut.Compare(converter, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
 
         Assert.Single(result.Warnings);
         Assert.Contains("Duplicate key", result.Warnings[0]);
@@ -76,10 +76,10 @@ public class ComparisonServiceTests
     [Fact]
     public void Compare_KeyOrderingDoesNotAffectMatchCorrectness()
     {
-        var convertor = _parser.Parse("Lohnart;PersonalNr;Betrag\nA1;1;100\n");
+        var converter = _parser.Parse("Lohnart;PersonalNr;Betrag\nA1;1;100\n");
         var client = _parser.Parse("PersonalNr;Lohnart;Betrag\n1;A1;100\n");
 
-        var result = _sut.Compare(convertor, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
+        var result = _sut.Compare(converter, client, Keys("PersonalNr", "Lohnart"), Compare("Betrag"));
 
         var row = Assert.Single(result.Rows);
         Assert.Equal(RowStatus.Matching, row.Status);

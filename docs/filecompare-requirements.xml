@@ -3,7 +3,7 @@
 
   <Project>
     <Name>FileCompare</Name>
-    <Description>A Blazor Server single-page reconciliation tool that compares a "Convertor output file" against a "Client expected file" (both semicolon-delimited, first line = headers). The user selects one or more key columns (composite key, ordered) and a single numeric column to compare. Matching rows are compared on that one numeric column; differences are grouped into configurable magnitude buckets. Results are shown as an expandable tree table grouped by key.</Description>
+    <Description>A Blazor Server single-page reconciliation tool that compares a "Converter output file" against a "Client expected file" (both semicolon-delimited, first line = headers). The user selects one or more key columns (composite key, ordered) and a single numeric column to compare. Matching rows are compared on that one numeric column; differences are grouped into configurable magnitude buckets. Results are shown as an expandable tree table grouped by key.</Description>
     <Type>ASP.NET Core Blazor Server (single page, interactive server-side rendering)</Type>
     <TargetFramework>net8.0</TargetFramework>
     <Language>C#</Language>
@@ -24,7 +24,7 @@
       <Scenario>Parsing: a data row with a different field count than the header row is reported as an error, not a crash</Scenario>
       <Scenario>Matching: row present in both files with equal compare-column values → Status = Matching</Scenario>
       <Scenario>Matching: row present in both files with differing compare-column values → Status = Different, with AbsoluteDifference computed correctly</Scenario>
-      <Scenario>Matching: row whose composite key exists only in the Convertor file → Status = Added</Scenario>
+      <Scenario>Matching: row whose composite key exists only in the Converter file → Status = Added</Scenario>
       <Scenario>Matching: row whose composite key exists only in the Client file → Status = Deleted</Scenario>
       <Scenario>Matching: duplicate composite-key values within a single file are detected and reported as a warning, without crashing</Scenario>
       <Scenario>Matching: composite key ordering (e.g. PersonalNr then Lohnart vs. reversed) still matches rows correctly regardless of column order in the source files</Scenario>
@@ -36,11 +36,11 @@
       <Scenario>Export: workbook contains a Summary sheet plus Matching/Added/Deleted sheets plus one sheet per difference-magnitude bucket</Scenario>
       <Scenario>Export: Summary sheet shows correct Matching/Added/Deleted/Different counts</Scenario>
       <Scenario>Export: each status/bucket sheet contains only that group's rows, with key values, both compare values, and a single combined other-columns value per row</Scenario>
-      <Scenario>Export/UI: columns appear in order key columns, compare(Convertor), compare(Client), [AbsoluteDifference on bucket sheets], combined other-columns column, whose header is the joined names of the remaining columns and whose values are the joined values only (no column-name prefix)</Scenario>
+      <Scenario>Export/UI: columns appear in order key columns, compare(Converter), compare(Client), [AbsoluteDifference on bucket sheets], combined other-columns column, whose header is the joined names of the remaining columns and whose values are the joined values only (no column-name prefix)</Scenario>
       <Scenario>Export: difference-bucket sheets additionally include an AbsoluteDifference column</Scenario>
       <Scenario>Export: warnings (e.g. duplicate keys) are listed on the Summary sheet</Scenario>
       <Scenario>Export: Summary sheet shows a row count for each configured difference-magnitude grouping boundary/bucket, not just the overall Different count</Scenario>
-      <Scenario>Export: Summary sheet labels the Added and Deleted counts as "Added (Rows found only in the Convertor output file)" and "Deleted (Rows found only in the Client expected file)" respectively</Scenario>
+      <Scenario>Export: Summary sheet labels the Added and Deleted counts as "Added (Rows found only in the Converter output file)" and "Deleted (Rows found only in the Client expected file)" respectively</Scenario>
       <Scenario>Input type: CSV parsing (fixed comma delimiter) produces the same headers/rows as semicolon delimited-text parsing of an equivalent file with delimiters swapped</Scenario>
       <Scenario>Input type: delimited-text parsing with a tab or pipe delimiter produces the same headers/rows as semicolon parsing of an equivalent file with delimiters swapped</Scenario>
       <Scenario>Input type: switching file type or delimiter after both files are already uploaded re-parses and re-validates headers without requiring a full page reload</Scenario>
@@ -61,7 +61,7 @@
 
   <DataModel>
     <Entity name="FileTypeSelection">
-      <Field name="Format" type="enum: Csv | DelimitedText" notes="chosen input file type; applies to both the Convertor and Client files for a given comparison run"/>
+      <Field name="Format" type="enum: Csv | DelimitedText" notes="chosen input file type; applies to both the Converter and Client files for a given comparison run"/>
       <Field name="Delimiter" type="char" notes="field delimiter used only when Format = DelimitedText; one of ';' (default), tab, '|'; fixed to ',' when Format = Csv"/>
     </Entity>
     <Entity name="ParsedFile">
@@ -80,9 +80,9 @@
     <Entity name="RowResult">
       <Field name="KeyValues" type="List&lt;string&gt;" notes="values of the ordered key columns for this row"/>
       <Field name="OtherColumnValues" type="Dictionary&lt;string,string&gt;" notes="non-key, non-compare column values, for display context; rendered as a single combined column whose header is the joined column names and whose value is the joined values, both separated by '; ', with no 'ColumnName:' prefix on the values"/>
-      <Field name="ConvertorCompareValue" type="decimal?" notes="value of the compare column from the Convertor file, null if row absent there"/>
+      <Field name="ConverterCompareValue" type="decimal?" notes="value of the compare column from the Converter file, null if row absent there"/>
       <Field name="ClientCompareValue" type="decimal?" notes="value of the compare column from the Client file, null if row absent there"/>
-      <Field name="Status" type="enum: Matching | Different | Added | Deleted" notes="Added = key exists only in Convertor file; Deleted = key exists only in Client file"/>
+      <Field name="Status" type="enum: Matching | Different | Added | Deleted" notes="Added = key exists only in Converter file; Deleted = key exists only in Client file"/>
       <Field name="AbsoluteDifference" type="decimal?" notes="set only when Status = Different"/>
       <Field name="DifferenceGroup" type="string" notes="set only when Status = Different; which configured bucket the AbsoluteDifference falls into"/>
     </Entity>
@@ -99,9 +99,9 @@
 
     <Feature id="F1" priority="must-have">
       <Title>File upload: browse and drag &amp; drop</Title>
-      <Description>Two upload zones on the page, each supporting both a file-browse dialog and drag-and-drop, labeled "Convertor output file" and "Client expected file".</Description>
+      <Description>Two upload zones on the page, each supporting both a file-browse dialog and drag-and-drop, labeled "Converter output file" and "Client expected file".</Description>
       <AcceptanceCriteria>
-        <Criterion>Each upload zone shows its label ("Convertor output file" / "Client expected file") and accepts a file via click-to-browse or by dragging a file onto the zone.</Criterion>
+        <Criterion>Each upload zone shows its label ("Converter output file" / "Client expected file") and accepts a file via click-to-browse or by dragging a file onto the zone.</Criterion>
         <Criterion>Visual feedback (e.g. highlight) when a file is dragged over the zone.</Criterion>
         <Criterion>After a file is dropped/selected, the zone shows the file name and a way to replace it.</Criterion>
         <Criterion>Upload errors (wrong format, unreadable file) shown inline near the relevant zone, not as a crash.</Criterion>
@@ -149,8 +149,8 @@
       <Description>Match rows between the two files using the ordered composite key. Classify each row's status.</Description>
       <AcceptanceCriteria>
         <Criterion>Row present in both files (same composite key) with equal compare-column values → Status = Matching.</Criterion>
-        <Criterion>Row present in both files with differing compare-column values → Status = Different; compute AbsoluteDifference = |ConvertorValue - ClientValue|.</Criterion>
-        <Criterion>Row whose composite key exists only in the Convertor file → Status = Added.</Criterion>
+        <Criterion>Row present in both files with differing compare-column values → Status = Different; compute AbsoluteDifference = |ConverterValue - ClientValue|.</Criterion>
+        <Criterion>Row whose composite key exists only in the Converter file → Status = Added.</Criterion>
         <Criterion>Row whose composite key exists only in the Client file → Status = Deleted.</Criterion>
         <Criterion>Duplicate composite-key values within a single file are detected and reported as a warning, not a crash.</Criterion>
         <Criterion>Uses in-memory dictionary lookups (O(n)) rather than nested-loop comparison, so it scales to large files.</Criterion>
@@ -172,7 +172,7 @@
       <Title>Tree-table results view</Title>
       <Description>Display comparison results as an expandable tree table.</Description>
       <AcceptanceCriteria>
-        <Criterion>Column headers, left to right: each key column's name (in selected order), then the compare column's name suffixed "(Convertor)" in bold, then the compare column's name suffixed "(Client)" in bold, then a single combined column for all remaining "other" (non-key, non-compare) columns. That column's header is the names of those remaining columns joined with "; " (e.g. "Name; Department"), and each row's value is just the corresponding values joined with "; ", in the same order, with no column-name prefix (e.g. "Alice; Sales") — rather than one column per source column.</Criterion>
+        <Criterion>Column headers, left to right: each key column's name (in selected order), then the compare column's name suffixed "(Converter)" in bold, then the compare column's name suffixed "(Client)" in bold, then a single combined column for all remaining "other" (non-key, non-compare) columns. That column's header is the names of those remaining columns joined with "; " (e.g. "Name; Department"), and each row's value is just the corresponding values joined with "; ", in the same order, with no column-name prefix (e.g. "Alice; Sales") — rather than one column per source column.</Criterion>
         <Criterion>Top level of the tree has four nodes, each showing its label and row count in parentheses: "Matching entries (N)", "Added entries (N)", "Deleted entries (N)", "Different entries (N)".</Criterion>
         <Criterion>Under "Different entries", rows are further grouped by difference-magnitude bucket (from F6), each bucket labeled with its range and count.</Criterion>
         <Criterion>Within any node/bucket, rows are grouped hierarchically by key column values in order: expanding shows the first key column's distinct values (with counts); expanding one of those shows the second key column's distinct values within it; and so on until the last key level, which expands to show the actual matched row(s) with all column values.</Criterion>
@@ -188,7 +188,7 @@
       <AcceptanceCriteria>
         <Criterion>"Download report" button appears once results are shown and triggers a browser file download of an .xlsx workbook.</Criterion>
         <Criterion>Workbook contains a "Summary" sheet with the Matching/Added/Deleted/Different counts, the difference-grouping boundaries used, a row count for each configured difference-magnitude bucket, and any warnings (e.g. duplicate keys).</Criterion>
-        <Criterion>On the Summary sheet, the Added count is labeled "Added (Rows found only in the Convertor output file)" and the Deleted count is labeled "Deleted (Rows found only in the Client expected file)"; this longer wording is for the Summary sheet's labels only — the "Added"/"Deleted" sheet tab names (see below) are unaffected, to stay within Excel's naming constraints.</Criterion>
+        <Criterion>On the Summary sheet, the Added count is labeled "Added (Rows found only in the Converter output file)" and the Deleted count is labeled "Deleted (Rows found only in the Client expected file)"; this longer wording is for the Summary sheet's labels only — the "Added"/"Deleted" sheet tab names (see below) are unaffected, to stay within Excel's naming constraints.</Criterion>
         <Criterion>Workbook contains one sheet each for "Matching", "Added", and "Deleted", listing that group's rows with key values, both compare values, and a single combined column for all other columns (same joined-header/joined-values format as F7, with no column-name prefix) — matching the tree table's column order: keys, then compare values, then the combined column.</Criterion>
         <Criterion>Workbook contains one additional sheet per difference-magnitude bucket (from F6), named after that bucket's range (e.g. "Diff 0-0.5", "Diff gt 0.5"), each including an AbsoluteDifference column between the compare values and the combined other-columns column.</Criterion>
         <Criterion>Sheet names are sanitized and de-duplicated to satisfy Excel's naming constraints (max 31 characters, no \ / ? * [ ] : characters).</Criterion>
@@ -198,12 +198,12 @@
 
     <Feature id="F9" priority="must-have">
       <Title>Input file type selection (CSV / delimited text)</Title>
-      <Description>Before/alongside the upload zones, the user selects the type of the input files: "CSV" (comma-delimited, .csv) or "Delimited text" (default: semicolon; user-selectable delimiter). This selection applies to both the Convertor output file and the Client expected file for a given comparison run — mixed formats between the two files are not supported.</Description>
+      <Description>Before/alongside the upload zones, the user selects the type of the input files: "CSV" (comma-delimited, .csv) or "Delimited text" (default: semicolon; user-selectable delimiter). This selection applies to both the Converter output file and the Client expected file for a given comparison run — mixed formats between the two files are not supported.</Description>
       <AcceptanceCriteria>
         <Criterion>A file-type selector (e.g. radio buttons) offers "CSV" and "Delimited text", defaulting to "Delimited text".</Criterion>
         <Criterion>When "CSV" is selected, files are parsed as comma-delimited with no delimiter picker shown; upload zones accept ".csv".</Criterion>
         <Criterion>When "Delimited text" is selected, a delimiter dropdown appears offering Semicolon (default), Tab, and Pipe (Comma is covered by the dedicated CSV option, not duplicated here).</Criterion>
-        <Criterion>Both the Convertor output file and the Client expected file are parsed using the same selected format and delimiter; there is no per-file override.</Criterion>
+        <Criterion>Both the Converter output file and the Client expected file are parsed using the same selected format and delimiter; there is no per-file override.</Criterion>
         <Criterion>Changing the file type or delimiter after both files are already uploaded automatically re-parses both files and re-runs header validation (F2), without a full page reload.</Criterion>
         <Criterion>If an uploaded file cannot be parsed as the selected type (e.g. no occurrences of the selected delimiter found), a clear inline error is shown near the relevant upload zone instead of a crash.</Criterion>
       </AcceptanceCriteria>
@@ -215,7 +215,7 @@
       <Purpose>The entire workflow happens on one page: upload both files, choose keys and compare column, configure grouping, compare, and explore results as a tree — all without navigating away.</Purpose>
       <Elements>
         <Element>File-type selector: "CSV" or "Delimited text" (with delimiter dropdown: Semicolon/Tab/Pipe) (F9)</Element>
-        <Element>Two upload zones with browse + drag-and-drop: "Convertor output file", "Client expected file"</Element>
+        <Element>Two upload zones with browse + drag-and-drop: "Converter output file", "Client expected file"</Element>
         <Element>Header-mismatch error banner (shown only if validation in F2 fails)</Element>
         <Element>Dual-list key column selector with up/down reorder (F3)</Element>
         <Element>Compare column dropdown, numeric columns only (F4)</Element>
@@ -243,8 +243,8 @@
   </Constraints>
 
   <OpenItems>
-    <!-- Resolved 2026-08-07: default key columns = PersonalNr, Lohnart (in that order); default compare column = Betrag; Added/Deleted convention confirmed as specified (Added = only in Convertor file, Deleted = only in Client file). -->
-    <!-- Resolved 2026-08-09: Excel workbook removed as an input option (F9 is now CSV / Delimited text only; ClosedXML is retained solely for the F8 .xlsx export). The combined "Other columns" column (F7/F8) now uses a header of the joined remaining column names with values-only content (no "ColumnName:" prefix). F8 Summary sheet now also shows a row count per difference-magnitude bucket, and labels Added/Deleted as "Added (Rows found only in the Convertor output file)" / "Deleted (Rows found only in the Client expected file)". -->
+    <!-- Resolved 2026-08-07: default key columns = PersonalNr, Lohnart (in that order); default compare column = Betrag; Added/Deleted convention confirmed as specified (Added = only in Converter file, Deleted = only in Client file). -->
+    <!-- Resolved 2026-08-09: Excel workbook removed as an input option (F9 is now CSV / Delimited text only; ClosedXML is retained solely for the F8 .xlsx export). The combined "Other columns" column (F7/F8) now uses a header of the joined remaining column names with values-only content (no "ColumnName:" prefix). F8 Summary sheet now also shows a row count per difference-magnitude bucket, and labels Added/Deleted as "Added (Rows found only in the Converter output file)" / "Deleted (Rows found only in the Client expected file)". -->
   </OpenItems>
 
   <Deliverable>

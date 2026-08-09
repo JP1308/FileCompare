@@ -11,7 +11,7 @@
 | **Target framework** | .NET 8.0 (C#) |
 | **Database** | None — fully in-memory |
 
-FileCompare is a reconciliation tool that compares a **Convertor output file** against a **Client expected file**. Both files are parsed under a shared input format, matched on a user-chosen composite key, and compared on one numeric column. Differences are grouped into configurable magnitude buckets and the whole result set is displayed as an expandable tree table grouped by key, with an optional multi-sheet Excel export.
+FileCompare is a reconciliation tool that compares a **Converter output file** against a **Client expected file**. Both files are parsed under a shared input format, matched on a user-chosen composite key, and compared on one numeric column. Differences are grouped into configurable magnitude buckets and the whole result set is displayed as an expandable tree table grouped by key, with an optional multi-sheet Excel export.
 
 ## 2. Tech Stack
 
@@ -44,14 +44,14 @@ FileCompare is a reconciliation tool that compares a **Convertor output file** a
 | `KeySelection` | `OrderedKeyColumns: List<string>` — composite key in user-arranged order. |
 | `CompareColumnSelection` | `ColumnName: string` — the single numeric column being compared. |
 | `DifferenceGroupingConfig` | `Groups: List<GroupBoundary>` — each an absolute-difference upper bound; default is one group with boundary `0.5`. |
-| `RowResult` | `KeyValues: List<string>`. `OtherColumnValues: Dictionary<string,string>` (non-key, non-compare, display-only; rendered as one combined column whose header is the joined column names and whose value is the joined values, both separated by `"; "`, with no `"ColumnName:"` prefix). `ConvertorCompareValue: decimal?` (null if row absent in Convertor file). `ClientCompareValue: decimal?` (null if row absent in Client file). `Status: Matching \| Different \| Added \| Deleted` (`Added` = key only in Convertor file, `Deleted` = key only in Client file). `AbsoluteDifference: decimal?` (set only when `Status = Different`). `DifferenceGroup: string` (set only when `Status = Different`). |
+| `RowResult` | `KeyValues: List<string>`. `OtherColumnValues: Dictionary<string,string>` (non-key, non-compare, display-only; rendered as one combined column whose header is the joined column names and whose value is the joined values, both separated by `"; "`, with no `"ColumnName:"` prefix). `ConverterCompareValue: decimal?` (null if row absent in Converter file). `ClientCompareValue: decimal?` (null if row absent in Client file). `Status: Matching \| Different \| Added \| Deleted` (`Added` = key only in Converter file, `Deleted` = key only in Client file). `AbsoluteDifference: decimal?` (set only when `Status = Different`). `DifferenceGroup: string` (set only when `Status = Different`). |
 | `ComparisonResult` | `Rows: List<RowResult>`, `MatchingCount`, `AddedCount`, `DeletedCount`, `DifferentCount` (all `int`). |
 
 ## 5. Features
 
 ### F1 — File upload: browse and drag & drop *(must-have)*
 
-Two upload zones, "Convertor output file" and "Client expected file", each supporting click-to-browse and drag-and-drop.
+Two upload zones, "Converter output file" and "Client expected file", each supporting click-to-browse and drag-and-drop.
 
 - Each zone shows its label and accepts a file via either input method.
 - Visual highlight when a file is dragged over the zone.
@@ -93,8 +93,8 @@ Exactly one numeric column is chosen as "the column to compare" — the only col
 Match rows between files using the ordered composite key; classify each row's status.
 
 - Same key, equal compare values → `Matching`.
-- Same key, differing compare values → `Different`; `AbsoluteDifference = |ConvertorValue - ClientValue|`.
-- Key only in Convertor file → `Added`.
+- Same key, differing compare values → `Different`; `AbsoluteDifference = |ConverterValue - ClientValue|`.
+- Key only in Converter file → `Added`.
 - Key only in Client file → `Deleted`.
 - Duplicate composite-key values within one file are detected and reported as a warning, not a crash.
 - Matching uses in-memory dictionary lookups (O(n)), not nested-loop comparison — must scale to large files.
@@ -112,7 +112,7 @@ Match rows between files using the ordered composite key; classify each row's st
 
 Comparison results are shown as an expandable tree table.
 
-- Column headers, left to right: each key column (in selected order) → compare column suffixed `(Convertor)` (bold) → compare column suffixed `(Client)` (bold) → one combined column for all remaining non-key, non-compare columns. That column's **header** is the names of those remaining columns joined with `"; "` (e.g. `"Name; Department"`), and each row's **value** is just the corresponding values joined with `"; "`, in the same order, with no column-name prefix (e.g. `"Alice; Sales"`).
+- Column headers, left to right: each key column (in selected order) → compare column suffixed `(Converter)` (bold) → compare column suffixed `(Client)` (bold) → one combined column for all remaining non-key, non-compare columns. That column's **header** is the names of those remaining columns joined with `"; "` (e.g. `"Name; Department"`), and each row's **value** is just the corresponding values joined with `"; "`, in the same order, with no column-name prefix (e.g. `"Alice; Sales"`).
 - Top level: four nodes with label + count — `Matching entries (N)`, `Added entries (N)`, `Deleted entries (N)`, `Different entries (N)`.
 - Under `Different entries`, rows are further grouped by difference-magnitude bucket (F6), each labeled with its range and count.
 - Within any node/bucket, rows are grouped hierarchically by key column values in key order: expanding shows the next key column's distinct values (with counts), down to the last key level, which expands to the actual matched row(s) with all column values.
@@ -126,7 +126,7 @@ A button downloads the full result as a multi-sheet `.xlsx` workbook, split by s
 
 - "Download report" appears once results are shown; triggers a browser file download.
 - `Summary` sheet: Matching/Added/Deleted/Different counts, the grouping boundaries used, a row count for each configured difference-magnitude bucket, and any warnings (e.g. duplicate keys).
-- On the Summary sheet, the Added count is labeled **"Added (Rows found only in the Convertor output file)"** and the Deleted count is labeled **"Deleted (Rows found only in the Client expected file)"**. This longer wording is for the Summary sheet's labels only — the `Added`/`Deleted` sheet tab names below stay short to satisfy Excel's naming constraints.
+- On the Summary sheet, the Added count is labeled **"Added (Rows found only in the Converter output file)"** and the Deleted count is labeled **"Deleted (Rows found only in the Client expected file)"**. This longer wording is for the Summary sheet's labels only — the `Added`/`Deleted` sheet tab names below stay short to satisfy Excel's naming constraints.
 - One sheet each for `Matching`, `Added`, `Deleted`: key values, both compare values, and the combined other-columns column (same joined-header/joined-values format as F7, no column-name prefix) — same column order as the tree table.
 - One additional sheet per difference-magnitude bucket, named after its range (e.g. `Diff 0-0.5`, `Diff gt 0.5`), each including an `AbsoluteDifference` column between the compare values and the combined other-columns column.
 - Sheet names are sanitized and de-duplicated to satisfy Excel's constraints (≤31 chars, no `\ / ? * [ ] :`).
@@ -150,7 +150,7 @@ Before/alongside the upload zones, the user picks the input type, applied to **b
 Elements, top to bottom:
 
 1. File-type selector: CSV / Delimited text (+ delimiter dropdown) (F9)
-2. Two upload zones — browse + drag-and-drop: "Convertor output file", "Client expected file" (F1)
+2. Two upload zones — browse + drag-and-drop: "Converter output file", "Client expected file" (F1)
 3. Header-mismatch error banner (shown only on F2 validation failure)
 4. Dual-list key column selector with up/down reorder (F3)
 5. Compare column dropdown, numeric columns only (F4)
@@ -192,7 +192,7 @@ xUnit tests target the parsing/comparison/grouping services. Required scenarios:
 **Matching**
 - Equal compare values on a shared key → `Matching`.
 - Differing compare values on a shared key → `Different`, with correct `AbsoluteDifference`.
-- Key only in Convertor file → `Added`.
+- Key only in Converter file → `Added`.
 - Key only in Client file → `Deleted`.
 - Duplicate composite-key values within one file are detected and reported as a warning, without crashing.
 - Composite key ordering is respected — matching is correct regardless of column order in the source files.
@@ -208,9 +208,9 @@ xUnit tests target the parsing/comparison/grouping services. Required scenarios:
 - Workbook contains a Summary sheet plus Matching/Added/Deleted sheets plus one sheet per difference bucket.
 - Summary sheet shows correct Matching/Added/Deleted/Different counts.
 - Summary sheet shows a row count for each configured difference-magnitude grouping boundary/bucket, not just the overall Different count.
-- Summary sheet labels the Added and Deleted counts as "Added (Rows found only in the Convertor output file)" and "Deleted (Rows found only in the Client expected file)" respectively.
+- Summary sheet labels the Added and Deleted counts as "Added (Rows found only in the Converter output file)" and "Deleted (Rows found only in the Client expected file)" respectively.
 - Each status/bucket sheet contains only that group's rows, with key values, both compare values, and one combined other-columns value per row.
-- Column order everywhere: key columns → compare(Convertor) → compare(Client) → [`AbsoluteDifference` on bucket sheets] → combined other-columns column, whose header is the joined names of the remaining columns and whose values are the joined values only (no column-name prefix).
+- Column order everywhere: key columns → compare(Converter) → compare(Client) → [`AbsoluteDifference` on bucket sheets] → combined other-columns column, whose header is the joined names of the remaining columns and whose values are the joined values only (no column-name prefix).
 - Difference-bucket sheets additionally include an `AbsoluteDifference` column.
 - Warnings (e.g. duplicate keys) are listed on the Summary sheet.
 
@@ -233,7 +233,7 @@ A runnable .NET 8 Blazor Server solution (`.sln` + `.csproj` + source), with a R
 
 - Default key columns: `PersonalNr`, `Lohnart` (in that order).
 - Default compare column: `Betrag`.
-- `Added`/`Deleted` convention confirmed: `Added` = key exists only in the Convertor file, `Deleted` = key exists only in the Client file.
+- `Added`/`Deleted` convention confirmed: `Added` = key exists only in the Converter file, `Deleted` = key exists only in the Client file.
 - Excel workbook removed as an input option (F9 is now CSV / Delimited text only); ClosedXML is retained solely for the F8 `.xlsx` export.
 - The combined other-columns column (F7/F8) now uses a header of the joined remaining column names, with values-only content (no `"ColumnName:"` prefix).
-- F8 Summary sheet now also shows a row count per difference-magnitude bucket, and labels Added/Deleted with the fuller "Rows found only in the Convertor/Client file" wording.
+- F8 Summary sheet now also shows a row count per difference-magnitude bucket, and labels Added/Deleted with the fuller "Rows found only in the Converter/Client file" wording.

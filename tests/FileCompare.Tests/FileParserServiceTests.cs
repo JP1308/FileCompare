@@ -33,10 +33,10 @@ public class FileParserServiceTests
     [Fact]
     public void Parse_HeaderSetsMatch_DoesNotThrow()
     {
-        var convertor = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10\n");
+        var converter = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10\n");
         var client = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10\n");
 
-        var exception = Record.Exception(() => _sut.ValidateHeaders(convertor, client));
+        var exception = Record.Exception(() => _sut.ValidateHeaders(converter, client));
 
         Assert.Null(exception);
     }
@@ -44,31 +44,31 @@ public class FileParserServiceTests
     [Fact]
     public void ValidateHeaders_MissingColumn_ThrowsHeaderMismatchException()
     {
-        var convertor = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10\n");
+        var converter = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10\n");
         var client = _sut.Parse("PersonalNr;Lohnart\n1;A1\n");
 
-        var ex = Assert.Throws<HeaderMismatchException>(() => _sut.ValidateHeaders(convertor, client));
-        Assert.Contains("Betrag", ex.OnlyInConvertorFile);
+        var ex = Assert.Throws<HeaderMismatchException>(() => _sut.ValidateHeaders(converter, client));
+        Assert.Contains("Betrag", ex.OnlyInConverterFile);
     }
 
     [Fact]
     public void ValidateHeaders_ExtraColumn_ThrowsHeaderMismatchException()
     {
-        var convertor = _sut.Parse("PersonalNr;Lohnart;Betrag;Extra\n1;A1;10;x\n");
+        var converter = _sut.Parse("PersonalNr;Lohnart;Betrag;Extra\n1;A1;10;x\n");
         var client = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10\n");
 
-        var ex = Assert.Throws<HeaderMismatchException>(() => _sut.ValidateHeaders(convertor, client));
-        Assert.Contains("Extra", ex.OnlyInConvertorFile);
+        var ex = Assert.Throws<HeaderMismatchException>(() => _sut.ValidateHeaders(converter, client));
+        Assert.Contains("Extra", ex.OnlyInConverterFile);
     }
 
     [Fact]
     public void ValidateHeaders_RenamedColumn_CaseSensitive_ThrowsHeaderMismatchException()
     {
-        var convertor = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10\n");
+        var converter = _sut.Parse("PersonalNr;Lohnart;Betrag\n1;A1;10\n");
         var client = _sut.Parse("PersonalNr;lohnart;Betrag\n1;A1;10\n");
 
-        var ex = Assert.Throws<HeaderMismatchException>(() => _sut.ValidateHeaders(convertor, client));
-        Assert.Contains("Lohnart", ex.OnlyInConvertorFile);
+        var ex = Assert.Throws<HeaderMismatchException>(() => _sut.ValidateHeaders(converter, client));
+        Assert.Contains("Lohnart", ex.OnlyInConverterFile);
         Assert.Contains("lohnart", ex.OnlyInClientFile);
     }
 

@@ -2,22 +2,22 @@ namespace FileCompare.Models;
 
 public class HeaderMismatchException : Exception
 {
-    public List<string> OnlyInConvertorFile { get; }
+    public List<string> OnlyInConverterFile { get; }
     public List<string> OnlyInClientFile { get; }
 
-    public HeaderMismatchException(List<string> onlyInConvertorFile, List<string> onlyInClientFile)
-        : base(BuildMessage(onlyInConvertorFile, onlyInClientFile))
+    public HeaderMismatchException(List<string> onlyInConverterFile, List<string> onlyInClientFile)
+        : base(BuildMessage(onlyInConverterFile, onlyInClientFile))
     {
-        OnlyInConvertorFile = onlyInConvertorFile;
+        OnlyInConverterFile = onlyInConverterFile;
         OnlyInClientFile = onlyInClientFile;
     }
 
-    private static string BuildMessage(List<string> onlyInConvertorFile, List<string> onlyInClientFile)
+    private static string BuildMessage(List<string> onlyInConverterFile, List<string> onlyInClientFile)
     {
         var parts = new List<string>();
-        if (onlyInConvertorFile.Count > 0)
+        if (onlyInConverterFile.Count > 0)
         {
-            parts.Add($"only in Convertor output file: {string.Join(", ", onlyInConvertorFile)}");
+            parts.Add($"only in Converter output file: {string.Join(", ", onlyInConverterFile)}");
         }
         if (onlyInClientFile.Count > 0)
         {

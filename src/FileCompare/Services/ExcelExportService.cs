@@ -57,7 +57,7 @@ public class ExcelExportService
         sheet.Row(1).Style.Font.Bold = true;
         sheet.Cell(2, 1).Value = "Matching";
         sheet.Cell(2, 2).Value = result.MatchingCount;
-        sheet.Cell(3, 1).Value = "Added (Rows found only in the Convertor output file)";
+        sheet.Cell(3, 1).Value = "Added (Rows found only in the Converter output file)";
         sheet.Cell(3, 2).Value = result.AddedCount;
         sheet.Cell(4, 1).Value = "Deleted (Rows found only in the Client expected file)";
         sheet.Cell(4, 2).Value = result.DeletedCount;
@@ -121,7 +121,7 @@ public class ExcelExportService
         {
             sheet.Cell(1, col++).Value = key;
         }
-        sheet.Cell(1, col++).Value = $"{compareColumnName} (Convertor)";
+        sheet.Cell(1, col++).Value = $"{compareColumnName} (Converter)";
         sheet.Cell(1, col++).Value = $"{compareColumnName} (Client)";
         if (includeAbsoluteDifference)
         {
@@ -138,7 +138,7 @@ public class ExcelExportService
             {
                 sheet.Cell(rowIndex, col++).Value = keyValue;
             }
-            sheet.Cell(rowIndex, col++).Value = row.ConvertorCompareValue.HasValue ? row.ConvertorCompareValue.Value : (XLCellValue)string.Empty;
+            sheet.Cell(rowIndex, col++).Value = row.ConverterCompareValue.HasValue ? row.ConverterCompareValue.Value : (XLCellValue)string.Empty;
             sheet.Cell(rowIndex, col++).Value = row.ClientCompareValue.HasValue ? row.ClientCompareValue.Value : (XLCellValue)string.Empty;
             if (includeAbsoluteDifference)
             {
