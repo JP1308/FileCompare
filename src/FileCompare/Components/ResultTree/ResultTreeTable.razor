@@ -1,4 +1,5 @@
 @using FileCompare.Models
+@using FileCompare.Services
 
 <div class="summary-counts">
     <span class="summary-chip">Matching: @Result.MatchingCount</span>
@@ -15,7 +16,7 @@
         }
         <div><strong>@CompareColumnName (Convertor)</strong></div>
         <div><strong>@CompareColumnName (Client)</strong></div>
-        <div>Other columns</div>
+        <div>@OtherColumnsFormatter.Header(OtherColumns)</div>
     </div>
 
     <CategoryNode Label="Matching entries" Rows="RowsFor(RowStatus.Matching)" LevelSelectors="BuildLevelSelectors(RowStatus.Matching)"

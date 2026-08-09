@@ -11,11 +11,6 @@
                @onchange="() => OnFormatChanged(InputFileFormat.DelimitedText)" />
         Delimited text
     </label>
-    <label class="file-type-option">
-        <input type="radio" name="fileFormat" checked="@(Selection.Format == InputFileFormat.Excel)"
-               @onchange="() => OnFormatChanged(InputFileFormat.Excel)" />
-        Excel workbook (.xlsx)
-    </label>
 
     @if (Selection.Format == InputFileFormat.DelimitedText)
     {

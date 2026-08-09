@@ -1,5 +1,4 @@
 using System.Text;
-using ClosedXML.Excel;
 using FileCompare.Models;
 using FileCompare.Services;
 
@@ -87,19 +86,6 @@ public class FileTypeAndEncodingTests
     }
 
     [Fact]
-    public void ParseExcel_ReadsFirstWorksheetHeadersAndRows()
-    {
-        var bytes = BuildWorkbookBytes(("PersonalNr", "Lohnart", "TextLohnart", "Betrag"),
-            ("1", "1000", "Überstunden", "10.5"));
-
-        var result = _sut.ParseExcel(bytes);
-
-        Assert.Equal(new[] { "PersonalNr", "Lohnart", "TextLohnart", "Betrag" }, result.Headers);
-        Assert.Equal("Überstunden", result.Rows[0]["TextLohnart"]);
-        Assert.Equal("10.5", result.Rows[0]["Betrag"]);
-    }
-
-    [Fact]
     public void ComparisonService_MatchesRowsAcrossFiles_WhenHeaderCasingDiffersOnlyInUmlauts()
     {
         var parser = new FileParserService();
@@ -114,24 +100,5 @@ public class FileTypeAndEncodingTests
 
         var row = Assert.Single(result.Rows);
         Assert.Equal(RowStatus.Matching, row.Status);
-    }
-
-    private static byte[] BuildWorkbookBytes(
-        (string, string, string, string) headers, (string, string, string, string) dataRow)
-    {
-        using var workbook = new XLWorkbook();
-        var sheet = workbook.Worksheets.Add("Sheet1");
-        sheet.Cell(1, 1).Value = headers.Item1;
-        sheet.Cell(1, 2).Value = headers.Item2;
-        sheet.Cell(1, 3).Value = headers.Item3;
-        sheet.Cell(1, 4).Value = headers.Item4;
-        sheet.Cell(2, 1).Value = dataRow.Item1;
-        sheet.Cell(2, 2).Value = dataRow.Item2;
-        sheet.Cell(2, 3).Value = dataRow.Item3;
-        sheet.Cell(2, 4).Value = dataRow.Item4;
-
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        return stream.ToArray();
     }
 }

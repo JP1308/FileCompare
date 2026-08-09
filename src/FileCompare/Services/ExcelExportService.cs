@@ -57,26 +57,36 @@ public class ExcelExportService
         sheet.Row(1).Style.Font.Bold = true;
         sheet.Cell(2, 1).Value = "Matching";
         sheet.Cell(2, 2).Value = result.MatchingCount;
-        sheet.Cell(3, 1).Value = "Added";
+        sheet.Cell(3, 1).Value = "Added (Rows found only in the Convertor output file)";
         sheet.Cell(3, 2).Value = result.AddedCount;
-        sheet.Cell(4, 1).Value = "Deleted";
+        sheet.Cell(4, 1).Value = "Deleted (Rows found only in the Client expected file)";
         sheet.Cell(4, 2).Value = result.DeletedCount;
         sheet.Cell(5, 1).Value = "Different";
         sheet.Cell(5, 2).Value = result.DifferentCount;
 
         var row = 7;
         sheet.Cell(row, 1).Value = "Difference-magnitude grouping boundaries";
-        sheet.Cell(row, 1).Style.Font.Bold = true;
+        sheet.Cell(row, 2).Value = "Count";
+        sheet.Row(row).Style.Font.Bold = true;
         row++;
+
+        var bucketCounts = result.Rows
+            .Where(r => r.Status == RowStatus.Different)
+            .GroupBy(r => r.DifferenceGroup ?? "(ungrouped)")
+            .ToDictionary(g => g.Key, g => g.Count());
 
         var lower = 0m;
         foreach (var boundary in groupingConfig.Groups.OrderBy(g => g.UpperBound))
         {
-            sheet.Cell(row, 1).Value = $"{lower:0.####} < diff <= {boundary.UpperBound:0.####}";
+            var label = $"{lower:0.####} < diff <= {boundary.UpperBound:0.####}";
+            sheet.Cell(row, 1).Value = label;
+            sheet.Cell(row, 2).Value = bucketCounts.GetValueOrDefault(label, 0);
             row++;
             lower = boundary.UpperBound;
         }
-        sheet.Cell(row, 1).Value = $"{GroupingService.OverflowGroupLabel} ({lower:0.####})";
+        var overflowLabel = $"{GroupingService.OverflowGroupLabel} ({lower:0.####})";
+        sheet.Cell(row, 1).Value = overflowLabel;
+        sheet.Cell(row, 2).Value = bucketCounts.GetValueOrDefault(overflowLabel, 0);
         row++;
 
         if (result.Warnings.Count > 0)
@@ -117,7 +127,7 @@ public class ExcelExportService
         {
             sheet.Cell(1, col++).Value = "AbsoluteDifference";
         }
-        sheet.Cell(1, col++).Value = "Other columns";
+        sheet.Cell(1, col++).Value = OtherColumnsFormatter.Header(otherColumns);
         sheet.Row(1).Style.Font.Bold = true;
 
         var rowIndex = 2;

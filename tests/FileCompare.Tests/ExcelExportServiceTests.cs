@@ -78,8 +78,27 @@ public class ExcelExportServiceTests
 
         Assert.Equal("Matching", summary.Cell(2, 1).GetString());
         Assert.Equal(1, summary.Cell(2, 2).GetValue<int>());
+        Assert.Equal("Added (Rows found only in the Convertor output file)", summary.Cell(3, 1).GetString());
+        Assert.Equal(1, summary.Cell(3, 2).GetValue<int>());
+        Assert.Equal("Deleted (Rows found only in the Client expected file)", summary.Cell(4, 1).GetString());
+        Assert.Equal(1, summary.Cell(4, 2).GetValue<int>());
         Assert.Equal("Different", summary.Cell(5, 1).GetString());
         Assert.Equal(1, summary.Cell(5, 2).GetValue<int>());
+    }
+
+    [Fact]
+    public void ExportToExcel_SummarySheet_ShowsRowCountPerDifferenceMagnitudeBucket()
+    {
+        var bytes = _sut.ExportToExcel(BuildSampleResult(), KeyColumns, OtherColumns, "Betrag", DifferenceGroupingConfig.Default());
+
+        using var stream = new MemoryStream(bytes);
+        using var workbook = new XLWorkbook(stream);
+        var summary = workbook.Worksheet("Summary");
+
+        Assert.Equal("0 < diff <= 0.5", summary.Cell(8, 1).GetString());
+        Assert.Equal(1, summary.Cell(8, 2).GetValue<int>());
+        Assert.Equal("greater than last boundary (0.5)", summary.Cell(9, 1).GetString());
+        Assert.Equal(0, summary.Cell(9, 2).GetValue<int>());
     }
 
     [Fact]
@@ -109,8 +128,8 @@ public class ExcelExportServiceTests
         Assert.Equal("Lohnart", sheet.Cell(1, 2).GetString());
         Assert.Equal("Betrag (Convertor)", sheet.Cell(1, 3).GetString());
         Assert.Equal("Betrag (Client)", sheet.Cell(1, 4).GetString());
-        Assert.Equal("Other columns", sheet.Cell(1, 5).GetString());
-        Assert.Equal("Name: Alice", sheet.Cell(2, 5).GetString());
+        Assert.Equal("Name", sheet.Cell(1, 5).GetString());
+        Assert.Equal("Alice", sheet.Cell(2, 5).GetString());
     }
 
     [Fact]

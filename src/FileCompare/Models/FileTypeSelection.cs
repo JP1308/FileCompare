@@ -4,7 +4,6 @@ public enum InputFileFormat
 {
     Csv,
     DelimitedText,
-    Excel,
 }
 
 public record FileTypeSelection

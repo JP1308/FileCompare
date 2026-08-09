@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <AppRequirements>
 
   <Project>
@@ -29,20 +29,20 @@
       <Scenario>Matching: duplicate composite-key values within a single file are detected and reported as a warning, without crashing</Scenario>
       <Scenario>Matching: composite key ordering (e.g. PersonalNr then Lohnart vs. reversed) still matches rows correctly regardless of column order in the source files</Scenario>
       <Scenario>Matching: a non-numeric value in the compare column produces a clear error rather than an unhandled exception</Scenario>
-      <Scenario>Grouping: a difference exactly equal to a bucket boundary falls into the lower bucket (group N = boundaryN-1 &lt; diff &le; boundaryN)</Scenario>
+      <Scenario>Grouping: a difference exactly equal to a bucket boundary falls into the lower bucket (group N = boundaryN-1 &lt; diff ≤ boundaryN)</Scenario>
       <Scenario>Grouping: a difference greater than the last configured boundary falls into the final "greater than last boundary" group</Scenario>
       <Scenario>Grouping: the default configuration is a single group with boundary 0.5, applied when the user has not customized it</Scenario>
       <Scenario>Grouping: changing boundaries and re-grouping the same Different rows produces updated bucket assignments without re-parsing</Scenario>
       <Scenario>Export: workbook contains a Summary sheet plus Matching/Added/Deleted sheets plus one sheet per difference-magnitude bucket</Scenario>
       <Scenario>Export: Summary sheet shows correct Matching/Added/Deleted/Different counts</Scenario>
-      <Scenario>Export: each status/bucket sheet contains only that group's rows, with key values, both compare values, and a single combined "Other columns" value per row</Scenario>
-      <Scenario>Export/UI: columns appear in order key columns, compare(Convertor), compare(Client), [AbsoluteDifference on bucket sheets], combined "Other columns"</Scenario>
+      <Scenario>Export: each status/bucket sheet contains only that group's rows, with key values, both compare values, and a single combined other-columns value per row</Scenario>
+      <Scenario>Export/UI: columns appear in order key columns, compare(Convertor), compare(Client), [AbsoluteDifference on bucket sheets], combined other-columns column, whose header is the joined names of the remaining columns and whose values are the joined values only (no column-name prefix)</Scenario>
       <Scenario>Export: difference-bucket sheets additionally include an AbsoluteDifference column</Scenario>
       <Scenario>Export: warnings (e.g. duplicate keys) are listed on the Summary sheet</Scenario>
+      <Scenario>Export: Summary sheet shows a row count for each configured difference-magnitude grouping boundary/bucket, not just the overall Different count</Scenario>
+      <Scenario>Export: Summary sheet labels the Added and Deleted counts as "Added (Rows found only in the Convertor output file)" and "Deleted (Rows found only in the Client expected file)" respectively</Scenario>
       <Scenario>Input type: CSV parsing (fixed comma delimiter) produces the same headers/rows as semicolon delimited-text parsing of an equivalent file with delimiters swapped</Scenario>
       <Scenario>Input type: delimited-text parsing with a tab or pipe delimiter produces the same headers/rows as semicolon parsing of an equivalent file with delimiters swapped</Scenario>
-      <Scenario>Input type: Excel-workbook parsing reads the first worksheet, treats row 1 as headers, and produces the same ParsedFile shape as delimited-text parsing</Scenario>
-      <Scenario>Input type: an unreadable or non-Excel file selected under "Excel workbook" mode produces a clear inline error rather than an unhandled exception</Scenario>
       <Scenario>Input type: switching file type or delimiter after both files are already uploaded re-parses and re-validates headers without requiring a full page reload</Scenario>
       <Scenario>Encoding: a UTF-8 (with and without BOM) delimited-text file containing ä, ö, ü, Ä, Ö, Ü, ß in headers and values parses with those characters intact</Scenario>
       <Scenario>Encoding: a Windows-1252/ISO-8859-1 encoded delimited-text file containing umlaut characters is auto-detected and parsed correctly rather than as mojibake</Scenario>
@@ -50,7 +50,7 @@
       <Scenario>Encoding: a row containing umlaut characters in its key or other-column values matches correctly across both files and round-trips unchanged into the Excel export</Scenario>
     </Testing>
     <OtherLibraries>
-      <Library>ClosedXML (MIT) — generates the multi-sheet .xlsx export for F8, and reads uploaded Excel workbooks for F9; no other libraries required beyond built-in Blazor InputFile component and ASP.NET Core</Library>
+      <Library>ClosedXML (MIT) — generates the multi-sheet .xlsx export for F8; no other libraries required beyond built-in Blazor InputFile component and ASP.NET Core</Library>
     </OtherLibraries>
   </TechStack>
 
@@ -61,8 +61,8 @@
 
   <DataModel>
     <Entity name="FileTypeSelection">
-      <Field name="Format" type="enum: Csv | DelimitedText | Excel" notes="chosen input file type; applies to both the Convertor and Client files for a given comparison run"/>
-      <Field name="Delimiter" type="char" notes="field delimiter used only when Format = DelimitedText; one of ';' (default), tab, '|'; fixed to ',' when Format = Csv; ignored when Format = Excel"/>
+      <Field name="Format" type="enum: Csv | DelimitedText" notes="chosen input file type; applies to both the Convertor and Client files for a given comparison run"/>
+      <Field name="Delimiter" type="char" notes="field delimiter used only when Format = DelimitedText; one of ';' (default), tab, '|'; fixed to ',' when Format = Csv"/>
     </Entity>
     <Entity name="ParsedFile">
       <Field name="Headers" type="List&lt;string&gt;" notes="column names from first line, in file order"/>
@@ -79,7 +79,7 @@
     </Entity>
     <Entity name="RowResult">
       <Field name="KeyValues" type="List&lt;string&gt;" notes="values of the ordered key columns for this row"/>
-      <Field name="OtherColumnValues" type="Dictionary&lt;string,string&gt;" notes="non-key, non-compare column values, for display context"/>
+      <Field name="OtherColumnValues" type="Dictionary&lt;string,string&gt;" notes="non-key, non-compare column values, for display context; rendered as a single combined column whose header is the joined column names and whose value is the joined values, both separated by '; ', with no 'ColumnName:' prefix on the values"/>
       <Field name="ConvertorCompareValue" type="decimal?" notes="value of the compare column from the Convertor file, null if row absent there"/>
       <Field name="ClientCompareValue" type="decimal?" notes="value of the compare column from the Client file, null if row absent there"/>
       <Field name="Status" type="enum: Matching | Different | Added | Deleted" notes="Added = key exists only in Convertor file; Deleted = key exists only in Client file"/>
@@ -110,12 +110,12 @@
 
     <Feature id="F2" priority="must-have">
       <Title>Parse and validate headers</Title>
-      <Description>Parse both files according to the selected input file type (F9) — delimited text (first line = headers, split on the selected delimiter) or the first worksheet of an Excel workbook (first row = headers). The set of column names in both files must match exactly.</Description>
+      <Description>Parse both files according to the selected input file type (F9) — delimited text, first line = headers, split on the selected delimiter. The set of column names in both files must match exactly.</Description>
       <AcceptanceCriteria>
         <Criterion>Trims whitespace around each header and field value.</Criterion>
         <Criterion>If the header sets differ (missing column, extra column, or renamed column, case-sensitive) in either file, comparison is blocked and a clear error is shown listing the mismatched column names — this is a hard failure ("throw"), not a warning.</Criterion>
         <Criterion>Header-set comparison treats umlaut case variants consistently — Ä/ä, Ö/ö, and Ü/ü are matched as equivalent pairs (case-insensitive for these letters specifically) even though other ASCII letters remain case-sensitive, so encoding/casing differences in umlauts alone don't produce a false header-mismatch error.</Criterion>
-        <Criterion>Delimited-text files are read as UTF-8 (with BOM detection) by default, with automatic fallback to Windows-1252/ISO-8859-1 if the content isn't valid UTF-8, so German umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) in headers and values are read correctly rather than as mojibake or replacement characters. Excel-workbook input (F9) is unaffected, since .xlsx text is natively Unicode.</Criterion>
+        <Criterion>Delimited-text files are read as UTF-8 (with BOM detection) by default, with automatic fallback to Windows-1252/ISO-8859-1 if the content isn't valid UTF-8, so German umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) in headers and values are read correctly rather than as mojibake or replacement characters.</Criterion>
         <Criterion>Gracefully reports an error if a data row has a different number of fields than the header row.</Criterion>
         <Criterion>Handles empty lines by skipping them.</Criterion>
       </AcceptanceCriteria>
@@ -162,9 +162,9 @@
       <Description>For rows with Status = Different, group them by how large the AbsoluteDifference is, using user-configurable bucket boundaries (e.g. 0–0.5, 0.5–1, 1–1.5 ...).</Description>
       <AcceptanceCriteria>
         <Criterion>Settings panel lets the user specify how many groups to use and the absolute-value boundary for each group.</Criterion>
-        <Criterion>Buckets are applied as: group 1 = 0 &lt; diff &le; boundary1, group 2 = boundary1 &lt; diff &le; boundary2, etc.; a final "greater than last boundary" group catches any remainder.</Criterion>
+        <Criterion>Buckets are applied as: group 1 = 0 &lt; diff ≤ boundary1, group 2 = boundary1 &lt; diff ≤ boundary2, etc.; a final "greater than last boundary" group catches any remainder.</Criterion>
         <Criterion>Changing the grouping settings and re-running updates the Different-entries grouping without needing to re-upload files.</Criterion>
-        <Criterion>A sensible default is provided if the user doesn't customize it: a single group with boundary 0.5 (i.e. 0 &lt; diff &le; 0.5, with everything above 0.5 falling into the overflow group).</Criterion>
+        <Criterion>A sensible default is provided if the user doesn't customize it: a single group with boundary 0.5 (i.e. 0 &lt; diff ≤ 0.5, with everything above 0.5 falling into the overflow group).</Criterion>
       </AcceptanceCriteria>
     </Feature>
 
@@ -172,7 +172,7 @@
       <Title>Tree-table results view</Title>
       <Description>Display comparison results as an expandable tree table.</Description>
       <AcceptanceCriteria>
-        <Criterion>Column headers, left to right: each key column's name (in selected order), then the compare column's name suffixed "(Convertor)" in bold, then the compare column's name suffixed "(Client)" in bold, then a single "Other columns" column. All remaining "other" (non-key, non-compare) columns are combined into that one column per row, formatted as "ColumnName: Value" pairs separated by "; " (e.g. "Name: Alice; Department: Sales") rather than one column per source column.</Criterion>
+        <Criterion>Column headers, left to right: each key column's name (in selected order), then the compare column's name suffixed "(Convertor)" in bold, then the compare column's name suffixed "(Client)" in bold, then a single combined column for all remaining "other" (non-key, non-compare) columns. That column's header is the names of those remaining columns joined with "; " (e.g. "Name; Department"), and each row's value is just the corresponding values joined with "; ", in the same order, with no column-name prefix (e.g. "Alice; Sales") — rather than one column per source column.</Criterion>
         <Criterion>Top level of the tree has four nodes, each showing its label and row count in parentheses: "Matching entries (N)", "Added entries (N)", "Deleted entries (N)", "Different entries (N)".</Criterion>
         <Criterion>Under "Different entries", rows are further grouped by difference-magnitude bucket (from F6), each bucket labeled with its range and count.</Criterion>
         <Criterion>Within any node/bucket, rows are grouped hierarchically by key column values in order: expanding shows the first key column's distinct values (with counts); expanding one of those shows the second key column's distinct values within it; and so on until the last key level, which expands to show the actual matched row(s) with all column values.</Criterion>
@@ -187,25 +187,25 @@
       <Description>Button to download the full comparison result as a multi-sheet Excel (.xlsx) workbook from the browser, split so each status group and each difference-magnitude bucket is its own sheet.</Description>
       <AcceptanceCriteria>
         <Criterion>"Download report" button appears once results are shown and triggers a browser file download of an .xlsx workbook.</Criterion>
-        <Criterion>Workbook contains a "Summary" sheet with the Matching/Added/Deleted/Different counts, the difference-grouping boundaries used, and any warnings (e.g. duplicate keys).</Criterion>
-        <Criterion>Workbook contains one sheet each for "Matching", "Added", and "Deleted", listing that group's rows with key values, both compare values, and a combined "Other columns" column (same "ColumnName: Value; ..." format as F7) — matching the tree table's column order: keys, then compare values, then the combined column.</Criterion>
-        <Criterion>Workbook contains one additional sheet per difference-magnitude bucket (from F6), named after that bucket's range (e.g. "Diff 0-0.5", "Diff gt 0.5"), each including an AbsoluteDifference column between the compare values and the combined "Other columns" column.</Criterion>
+        <Criterion>Workbook contains a "Summary" sheet with the Matching/Added/Deleted/Different counts, the difference-grouping boundaries used, a row count for each configured difference-magnitude bucket, and any warnings (e.g. duplicate keys).</Criterion>
+        <Criterion>On the Summary sheet, the Added count is labeled "Added (Rows found only in the Convertor output file)" and the Deleted count is labeled "Deleted (Rows found only in the Client expected file)"; this longer wording is for the Summary sheet's labels only — the "Added"/"Deleted" sheet tab names (see below) are unaffected, to stay within Excel's naming constraints.</Criterion>
+        <Criterion>Workbook contains one sheet each for "Matching", "Added", and "Deleted", listing that group's rows with key values, both compare values, and a single combined column for all other columns (same joined-header/joined-values format as F7, with no column-name prefix) — matching the tree table's column order: keys, then compare values, then the combined column.</Criterion>
+        <Criterion>Workbook contains one additional sheet per difference-magnitude bucket (from F6), named after that bucket's range (e.g. "Diff 0-0.5", "Diff gt 0.5"), each including an AbsoluteDifference column between the compare values and the combined other-columns column.</Criterion>
         <Criterion>Sheet names are sanitized and de-duplicated to satisfy Excel's naming constraints (max 31 characters, no \ / ? * [ ] : characters).</Criterion>
         <Criterion>Umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) in key values, other column values, and column headers are preserved exactly in the exported workbook, matching what is shown in the tree table.</Criterion>
       </AcceptanceCriteria>
     </Feature>
 
     <Feature id="F9" priority="must-have">
-      <Title>Input file type selection (CSV / delimited text / Excel)</Title>
-      <Description>Before/alongside the upload zones, the user selects the type of the input files: "CSV" (comma-delimited, .csv), "Delimited text" (default: semicolon; user-selectable delimiter), or "Excel workbook" (.xlsx). This selection applies to both the Convertor output file and the Client expected file for a given comparison run — mixed formats between the two files are not supported.</Description>
+      <Title>Input file type selection (CSV / delimited text)</Title>
+      <Description>Before/alongside the upload zones, the user selects the type of the input files: "CSV" (comma-delimited, .csv) or "Delimited text" (default: semicolon; user-selectable delimiter). This selection applies to both the Convertor output file and the Client expected file for a given comparison run — mixed formats between the two files are not supported.</Description>
       <AcceptanceCriteria>
-        <Criterion>A file-type selector (e.g. radio buttons) offers "CSV", "Delimited text", and "Excel workbook (.xlsx)", defaulting to "Delimited text".</Criterion>
+        <Criterion>A file-type selector (e.g. radio buttons) offers "CSV" and "Delimited text", defaulting to "Delimited text".</Criterion>
         <Criterion>When "CSV" is selected, files are parsed as comma-delimited with no delimiter picker shown; upload zones accept ".csv".</Criterion>
         <Criterion>When "Delimited text" is selected, a delimiter dropdown appears offering Semicolon (default), Tab, and Pipe (Comma is covered by the dedicated CSV option, not duplicated here).</Criterion>
-        <Criterion>When "Excel workbook" is selected, the delimiter dropdown is hidden/disabled, and both uploaded files are parsed by reading the first worksheet, treating row 1 as headers, in the same column-order/trimming semantics as delimited-text parsing (F2).</Criterion>
         <Criterion>Both the Convertor output file and the Client expected file are parsed using the same selected format and delimiter; there is no per-file override.</Criterion>
         <Criterion>Changing the file type or delimiter after both files are already uploaded automatically re-parses both files and re-runs header validation (F2), without a full page reload.</Criterion>
-        <Criterion>If an uploaded file cannot be parsed as the selected type (e.g. not a valid .xlsx, or no occurrences of the selected delimiter found), a clear inline error is shown near the relevant upload zone instead of a crash.</Criterion>
+        <Criterion>If an uploaded file cannot be parsed as the selected type (e.g. no occurrences of the selected delimiter found), a clear inline error is shown near the relevant upload zone instead of a crash.</Criterion>
       </AcceptanceCriteria>
     </Feature>
   </Features>
@@ -214,7 +214,7 @@
     <Screen name="Home (single page)">
       <Purpose>The entire workflow happens on one page: upload both files, choose keys and compare column, configure grouping, compare, and explore results as a tree — all without navigating away.</Purpose>
       <Elements>
-        <Element>File-type selector: "CSV", "Delimited text" (with delimiter dropdown: Semicolon/Tab/Pipe), or "Excel workbook (.xlsx)" (F9)</Element>
+        <Element>File-type selector: "CSV" or "Delimited text" (with delimiter dropdown: Semicolon/Tab/Pipe) (F9)</Element>
         <Element>Two upload zones with browse + drag-and-drop: "Convertor output file", "Client expected file"</Element>
         <Element>Header-mismatch error banner (shown only if validation in F2 fails)</Element>
         <Element>Dual-list key column selector with up/down reorder (F3)</Element>
@@ -232,18 +232,19 @@
     <ErrorHandling>Header mismatches, malformed rows, unreadable uploads (including files that don't match the selected input type per F9), non-numeric values in the compare column, or invalid grouping settings all produce clear, inline UI messages — no unhandled exceptions or stack traces shown to the user.</ErrorHandling>
     <Logging>Not required beyond on-page error messages.</Logging>
     <Configuration>Max upload file size configured reasonably (e.g. up to 50MB) via Blazor InputFile settings.</Configuration>
-    <Encoding>Delimited-text input is read as UTF-8 (BOM-aware) with automatic fallback to Windows-1252/ISO-8859-1, so German umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) round-trip correctly end-to-end: from file read, through header validation, key/compare matching, and tree-table display, to the exported Excel workbook. Excel-workbook input/output is natively Unicode and needs no special handling.</Encoding>
+    <Encoding>Delimited-text input is read as UTF-8 (BOM-aware) with automatic fallback to Windows-1252/ISO-8859-1, so German umlaut characters (ä, ö, ü, Ä, Ö, Ü, ß) round-trip correctly end-to-end: from file read, through header validation, key/compare matching, and tree-table display, to the exported Excel workbook. The exported .xlsx (F8) is natively Unicode and needs no special handling on output.</Encoding>
   </NonFunctional>
 
   <Constraints>
     <Constraint>No database — pure C#/.NET and built-in/optional Blazor UI components.</Constraint>
-    <Constraint>Supported input file types are CSV (comma, first line = headers), delimited text (semicolon/tab/pipe, first line = headers), and Excel workbooks (first worksheet, first row = headers) — see F9. Both files in a comparison run must use the same type and delimiter.</Constraint>
+    <Constraint>Supported input file types are CSV (comma, first line = headers) and delimited text (semicolon/tab/pipe, first line = headers) — see F9. Both files in a comparison run must use the same type and delimiter.</Constraint>
     <Constraint>Single page only — no multi-page navigation/routing needed.</Constraint>
     <Constraint>Compare column must be numeric (decimal); non-numeric "value comparison" columns are out of scope for this version.</Constraint>
   </Constraints>
 
   <OpenItems>
     <!-- Resolved 2026-08-07: default key columns = PersonalNr, Lohnart (in that order); default compare column = Betrag; Added/Deleted convention confirmed as specified (Added = only in Convertor file, Deleted = only in Client file). -->
+    <!-- Resolved 2026-08-09: Excel workbook removed as an input option (F9 is now CSV / Delimited text only; ClosedXML is retained solely for the F8 .xlsx export). The combined "Other columns" column (F7/F8) now uses a header of the joined remaining column names with values-only content (no "ColumnName:" prefix). F8 Summary sheet now also shows a row count per difference-magnitude bucket, and labels Added/Deleted as "Added (Rows found only in the Convertor output file)" / "Deleted (Rows found only in the Client expected file)". -->
   </OpenItems>
 
   <Deliverable>

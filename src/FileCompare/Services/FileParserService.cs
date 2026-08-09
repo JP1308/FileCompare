@@ -1,5 +1,4 @@
 using System.Text;
-using ClosedXML.Excel;
 using FileCompare.Models;
 
 namespace FileCompare.Services;
@@ -53,49 +52,6 @@ public class FileParserService
         }
 
         return new ParsedFile { Headers = headers, Rows = rows, RowErrors = rowErrors };
-    }
-
-    public ParsedFile ParseExcel(byte[] content)
-    {
-        using var stream = new MemoryStream(content);
-        using var workbook = new XLWorkbook(stream);
-        var worksheet = workbook.Worksheets.First();
-
-        var firstRow = worksheet.FirstRowUsed();
-        if (firstRow is null)
-        {
-            return new ParsedFile { Headers = new List<string>(), Rows = new List<Dictionary<string, string>>() };
-        }
-
-        var lastColumn = firstRow.LastCellUsed()?.Address.ColumnNumber ?? 0;
-        var headers = new List<string>();
-        for (var col = 1; col <= lastColumn; col++)
-        {
-            headers.Add(firstRow.Cell(col).GetString().Trim());
-        }
-
-        var rows = new List<Dictionary<string, string>>();
-        foreach (var dataRow in worksheet.RowsUsed().Skip(1))
-        {
-            var row = new Dictionary<string, string>(UmlautInsensitiveComparer.Instance);
-            var isEmpty = true;
-            for (var col = 1; col <= lastColumn; col++)
-            {
-                var value = dataRow.Cell(col).GetString().Trim();
-                if (value.Length > 0)
-                {
-                    isEmpty = false;
-                }
-                row[headers[col - 1]] = value;
-            }
-
-            if (!isEmpty)
-            {
-                rows.Add(row);
-            }
-        }
-
-        return new ParsedFile { Headers = headers, Rows = rows };
     }
 
     public void ValidateHeaders(ParsedFile convertorFile, ParsedFile clientFile)
